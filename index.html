@@ -14,6 +14,8 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS (xlsx) for Real Excel (.xlsx) Template & Bulk Import -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -25,8 +27,8 @@
           },
           colors: {
             brand: {
-              navy: '#0A3D62',
-              navyDark: '#072842',
+              navy: '#0f294a',
+              navyDark: '#091b33',
               blue: '#0284C7',
               blueLight: '#E0F2FE',
               orange: '#F37021',
@@ -41,14 +43,13 @@
   </script>
 
   <style>
-    /* Custom scrollbar & utility styling */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
     .sidebar-item.active {
-      background: linear-gradient(90deg, rgba(2,132,199,0.28) 0%, rgba(2,132,199,0.08) 100%);
+      background: linear-gradient(90deg, rgba(2,132,199,0.32) 0%, rgba(2,132,199,0.08) 100%);
       border-left: 4px solid #38bdf8;
       color: #ffffff;
       font-weight: 600;
@@ -68,17 +69,17 @@
 
   <!-- Modal Container -->
   <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden items-center justify-center p-4 transition-opacity">
-    <div id="modal-content" class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative"></div>
+    <div id="modal-content" class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 relative"></div>
   </div>
 
   <div class="min-h-screen flex flex-col lg:flex-row">
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden"></div>
 
-    <!-- Left Navigation Sidebar -->
-    <aside id="sidebar" class="no-print fixed lg:sticky top-0 left-0 z-40 h-screen w-68 bg-brand-navy text-slate-200 flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 shrink-0 shadow-xl">
+    <!-- Left Navigation Sidebar (#0f294a Deep Navy) -->
+    <aside id="sidebar" class="no-print fixed lg:sticky top-0 left-0 z-40 h-screen w-68 bg-[#0f294a] text-slate-200 flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0 shrink-0 shadow-xl">
       <!-- Brand Header -->
-      <div class="h-16 px-5 flex items-center justify-between border-b border-white/10 bg-brand-navyDark">
+      <div class="h-16 px-5 flex items-center justify-between border-b border-white/10 bg-[#091b33]">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-display font-extrabold text-lg shadow-md">
             SM
@@ -87,7 +88,7 @@
             <div class="font-display font-extrabold tracking-tight text-white text-lg leading-none">
               SCHOOL<span class="text-orange-400">MITRA</span>
             </div>
-            <span class="text-[10px] uppercase tracking-widest text-sky-300 font-semibold">ERP Inventory v4.2</span>
+            <span class="text-[10px] uppercase tracking-widest text-sky-300 font-semibold">ERP Inventory v4.5</span>
           </div>
         </div>
         <button onclick="toggleMobileSidebar()" class="lg:hidden text-slate-300 hover:text-white p-1">
@@ -113,7 +114,7 @@
 
         <button onclick="navigate('assets')" data-nav="assets" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-200 hover:bg-white/10 transition text-left">
           <i data-lucide="package-plus" class="w-4 h-4 text-sky-300 shrink-0"></i>
-          <span>Add Assets</span>
+          <span>Add Assets & Excel Import</span>
         </button>
 
         <button onclick="navigate('vendors')" data-nav="vendors" class="sidebar-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-200 hover:bg-white/10 transition text-left">
@@ -187,7 +188,7 @@
       </div>
 
       <!-- Demo Reset Footer -->
-      <div class="p-3 border-t border-white/10 bg-brand-navyDark/80 text-xs">
+      <div class="p-3 border-t border-white/10 bg-[#091b33]/90 text-xs">
         <button onclick="resetDemoData()" class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-slate-200 font-medium transition">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Demo Data
         </button>
@@ -203,7 +204,7 @@
             <i data-lucide="menu" class="w-5 h-5"></i>
           </button>
 
-          <!-- Session & Role Switcher -->
+          <!-- Session & Active View Role Switcher -->
           <div class="hidden sm:flex items-center gap-2">
             <div>
               <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Session</label>
@@ -236,8 +237,8 @@
 
         <!-- Right Status Pill -->
         <div class="flex items-center gap-2.5">
-          <button onclick="navigate('issue')" class="hidden md:inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs transition">
-            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Quick Issue
+          <button onclick="navigate('assets')" class="hidden md:inline-flex items-center gap-1.5 bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-xs transition">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Excel Import
           </button>
           <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-full px-3 py-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -270,7 +271,7 @@
     // =========================================================================
     // 1. STATE & REALISTIC PRE-POPULATED SCHOOL DATA (R.D. PUBLIC SCHOOL)
     // =========================================================================
-    const STORAGE_KEY = 'schoolmitra_inventory_erp_v1';
+    const STORAGE_KEY = 'schoolmitra_inventory_erp_v45';
 
     const DEFAULT_STATE = {
       activeView: 'dashboard',
@@ -354,7 +355,8 @@
         { id: 'LOC-02', name: 'Admin Block', building: 'Administrative Wing', incharge: 'Trapti Singh Kushwah', capacity: '200 Items' },
         { id: 'LOC-03', name: 'Computer Lab', building: 'First Floor IT Wing', incharge: 'ERP Coordinator', capacity: '120 Systems' },
         { id: 'LOC-04', name: 'Boys Hostel', building: 'Residential Campus', incharge: 'Hostel Warden', capacity: '300 Beds' },
-        { id: 'LOC-05', name: 'Canteen', building: 'East Courtyard', incharge: 'Chandraprabha Rathore', capacity: '150 Items' }
+        { id: 'LOC-05', name: 'Canteen', building: 'East Courtyard', incharge: 'Chandraprabha Rathore', capacity: '150 Items' },
+        { id: 'LOC-06', name: 'Academic Wing', building: 'Main Classroom Block', incharge: 'Academic Coordinator', capacity: '400 Items' }
       ],
       requisitions: [
         {
@@ -399,7 +401,7 @@
           status: 'Pending Approval',
           remarks: 'Additional workstations for exam cell.',
           history: [
-            { time: '21 Nov 2026, 11:05 AM', action: 'Requisition Raised for 2x Core i5 Desktop Workstation', by: 'Super Admin' }
+            { time: '21 Nov 2026, 11:05 AM', action: 'Requisition Raised for 2x Desktop Core i5', by: 'Super Admin' }
           ]
         },
         {
@@ -419,12 +421,12 @@
           level2: 'Not Required',
           level3: 'Approved',
           status: 'PO Created',
-          linkedPO: 'PO-2026-008',
+          linkedPO: '251',
           remarks: 'Urgent exam question paper printing stock.',
           history: [
             { time: '18 Nov 2026, 09:40 AM', action: 'Requisition Raised by Trapti Singh Kushwah (Non-Teaching)', by: 'Trapti Singh Kushwah' },
             { time: '18 Nov 2026, 12:15 PM', action: 'Level 3 Approved by Ashish Sir', by: 'Ashish Sir' },
-            { time: '19 Nov 2026, 03:10 PM', action: 'Linked to Purchase Order PO-2026-008 & GRN Completed', by: 'Store Admin' }
+            { time: '19 Nov 2026, 03:10 PM', action: 'Linked to Purchase Order #251 & GRN Completed', by: 'Store Admin' }
           ]
         },
         {
@@ -562,66 +564,30 @@
           ]
         }
       ],
-      accountingPayables: [
-        { voucherId: 'AP-2026-088', date: '2026-11-23', poId: '252', vendorName: 'Ashish Enterprises & Suppliers', amount: 11033, status: 'Posted to Financial Accounting' },
-        { voucherId: 'AP-2026-087', date: '2026-11-19', poId: '251', vendorName: 'Ashish Enterprises & Suppliers', amount: 14840, status: 'Posted to Financial Accounting' }
-      ],
-      purchaseOrders: [
-        {
-          id: 'PO-2026-009',
-          date: '2026-11-22',
-          vendorId: 'VND-01',
-          reqId: 'REQ-000011',
-          status: 'Approved',
-          gstPercent: 18,
-          items: [
-            { categoryId: 'Electrical', assetId: 'AST-101', qty: 6, unitPrice: 2450 }
-          ]
-        },
-        {
-          id: 'PO-2026-008',
-          date: '2026-11-19',
-          vendorId: 'VND-02',
-          reqId: 'REQ-000012',
-          status: 'GRN Completed',
-          gstPercent: 12,
-          items: [
-            { categoryId: 'Stationery', assetId: 'AST-102', qty: 50, unitPrice: 265 }
-          ]
-        },
-        {
-          id: 'PO-2026-007',
-          date: '2026-11-17',
-          vendorId: 'VND-03',
-          reqId: '',
-          status: 'Approved',
-          gstPercent: 18,
-          items: [
-            { categoryId: 'IT', assetId: 'AST-104', qty: 4, unitPrice: 36500 }
-          ]
-        }
-      ],
       grnRecords: [
         {
           id: 'GRN-2026-015',
-          poId: 'PO-2026-008',
+          poId: '251',
           date: '2026-11-20',
           categoryId: 'Stationery',
           assetId: 'AST-102',
-          variant: 'A4 75GSM',
-          unit: 'Ream',
-          color: 'White',
-          expiry: '2028-11-20',
           qty: 50,
           unitPrice: 265,
-          model: 'JK-75',
-          salvageValue: 0,
           bookValue: 13250,
-          bookValueIT: 13250,
-          warranty: '2027-11-20',
-          make: 'JK Paper',
-          detail: '500 Sheets per Ream',
-          description: 'Verified against PO-2026-008'
+          expiry: '2028-11-20',
+          warranty: '2027-11-20'
+        },
+        {
+          id: 'GRN-2026-016',
+          poId: '252',
+          date: '2026-11-23',
+          categoryId: 'Function',
+          assetId: 'AST-107',
+          qty: 1,
+          unitPrice: 6900,
+          bookValue: 6900,
+          expiry: '2030-04-01',
+          warranty: '2027-04-01'
         }
       ],
       issueLogs: [
@@ -655,11 +621,20 @@
           department: 'Examination',
           mode: 'Direct Ad-hoc'
         }
+      ],
+      accountingSyncLog: [
+        { voucherId: 'OB-2026-001', date: '2026-04-01', type: 'Opening Stock Asset Ledger', ref: 'Session 2026-27 Init', ledger: 'Inventory Opening Stock A/c', amount: 1419310, status: 'Synced to Financial Accounting' },
+        { voucherId: 'AP-2026-088', date: '2026-11-23', type: 'Vendor Payable Voucher', ref: 'PO #252 / GRN-016', ledger: 'Ashish Enterprises & Suppliers', amount: 11033, status: 'Posted to Financial Accounting' },
+        { voucherId: 'AP-2026-087', date: '2026-11-19', type: 'Vendor Payable Voucher', ref: 'PO #251 / GRN-015', ledger: 'Ashish Enterprises & Suppliers', amount: 14840, status: 'Posted to Financial Accounting' }
+      ],
+      stockAdjustments: [
+        { id: 'ADJ-001', date: '2026-11-14', type: 'Return to Store', assetId: 'AST-102', qty: 4, personOrReason: 'Returned by Exam Cell (Unused Paper Reams)', value: 1060 }
       ]
     };
 
     let state = loadState();
     let activeCharts = [];
+    let pendingExcelRows = [];
 
     function loadState() {
       try {
@@ -682,6 +657,7 @@
 
     function resetDemoData() {
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      pendingExcelRows = [];
       saveState();
       showToast('Demo data restored to initial R.D. Public School state.', 'info');
       navigate(state.activeView);
@@ -690,13 +666,12 @@
     // =========================================================================
     // 2. HELPERS & UI UTILITIES
     // =========================================================================
-    function formatINR(num) {
-      return '₹' + Number(num || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    function cleanProductName(raw) {
+      return String(raw || '').replace(/^_+/, '').trim();
     }
 
-    function getCategoryName(catId) {
-      const cat = state.categories.find(c => c.id === catId);
-      return cat ? `${cat.id} (${cat.name})` : catId;
+    function formatINR(num) {
+      return '₹' + Number(num || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
     }
 
     function getAsset(assetId) {
@@ -707,13 +682,35 @@
       return state.vendors.find(v => v.id === vendorId);
     }
 
+    function calcPOFinancials(po) {
+      let subTotal = 0;
+      let totalGst = 0;
+      (po.items || []).forEach(it => {
+        const base = (Number(it.qty) || 0) * (Number(it.unitPrice) || 0);
+        const tax = base * ((Number(it.gst) || 0) / 100);
+        subTotal += base;
+        totalGst += tax;
+      });
+      return { subTotal, totalGst, grandTotal: subTotal + totalGst };
+    }
+
+    function getExpiringAssets30Days() {
+      const now = new Date('2026-11-24');
+      const limit = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return state.assets.filter(a => {
+        const exp = a.expiry ? new Date(a.expiry) : null;
+        const war = a.warranty ? new Date(a.warranty) : null;
+        return (exp && exp <= limit) || (war && war <= limit);
+      });
+    }
+
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
       const colors = {
         success: 'bg-emerald-600 text-white border-emerald-700',
         error: 'bg-rose-600 text-white border-rose-700',
         warning: 'bg-amber-500 text-slate-950 border-amber-600',
-        info: 'bg-brand-navy text-white border-sky-700'
+        info: 'bg-[#0f294a] text-white border-sky-700'
       };
       const icons = {
         success: 'check-circle-2',
@@ -735,7 +732,7 @@
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-x-4');
         setTimeout(() => toast.remove(), 300);
-      }, 3600);
+      }, 3800);
     }
 
     function openModal(htmlContent) {
@@ -779,30 +776,8 @@
       const openReqs = state.requisitions.filter(r => r.status !== 'Completed (Item Issued)' && r.status !== 'Cancelled').length;
       document.getElementById('sidebar-req-badge').textContent = openReqs;
 
-      const pendingPOs = state.purchaseOrders.filter(p => p.status === 'Approved (Ready for GRN)').length;
-      document.getElementById('sidebar-po-badge').textContent = pendingPOs;
-    }
-
-    function calcPOFinancials(po) {
-      let subTotal = 0;
-      let totalGst = 0;
-      (po.items || []).forEach(it => {
-        const base = (Number(it.qty) || 0) * (Number(it.unitPrice) || 0);
-        const tax = base * ((Number(it.gst) || 0) / 100);
-        subTotal += base;
-        totalGst += tax;
-      });
-      return { subTotal, totalGst, grandTotal: subTotal + totalGst };
-    }
-
-    function getExpiringAssets30Days() {
-      const now = new Date('2026-11-24');
-      const limit = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      return state.assets.filter(a => {
-        const exp = a.expiry ? new Date(a.expiry) : null;
-        const war = a.warranty ? new Date(a.warranty) : null;
-        return (exp && exp <= limit) || (war && war <= limit);
-      });
+      const readyPOs = state.purchaseOrders.filter(p => p.status === 'Approved (Ready for GRN)').length;
+      document.getElementById('sidebar-po-badge').textContent = readyPOs;
     }
 
     function exportTableCSV(filename, headers, rows) {
@@ -816,6 +791,18 @@
       link.download = filename;
       link.click();
       showToast(`Exported ${filename} successfully.`, 'success');
+    }
+
+    function exportSheetXLSX(filename, sheetName, headers, rows) {
+      if (typeof XLSX === 'undefined') {
+        exportTableCSV(filename.replace(/\.xlsx$/i, '.csv'), headers, rows);
+        return;
+      }
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      XLSX.writeFile(wb, filename);
+      showToast(`Downloaded ${filename} successfully.`, 'success');
     }
 
     function copyTableText(headers, rows) {
@@ -835,7 +822,7 @@
     const VIEW_TITLES = {
       'dashboard': 'KPI & Analytics Dashboard',
       'categories': 'Add Category',
-      'assets': 'Add Assets',
+      'assets': 'Add Assets & Excel Opening Stock Import',
       'vendors': 'Add Vendor',
       'requisition-form': 'Raise Requisition',
       'requisition-list': 'Requisition List & Approvals',
@@ -845,7 +832,7 @@
       'issue': 'Asset Issue / Consumption',
       'issue-reports': 'Issue / Consumption Report',
       'locations': 'Add Location',
-      'asset-management': 'Asset Management & Valuation',
+      'asset-management': 'Asset Management — Returns, Damages & QR Tags',
       'reports': 'Comprehensive Inventory Reports'
     };
 
@@ -860,15 +847,12 @@
       state.activeView = view;
       saveState();
 
-      // Update sidebar active state
       document.querySelectorAll('.sidebar-item').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.nav === view);
       });
 
-      // Update breadcrumb
       document.getElementById('breadcrumb-current').textContent = VIEW_TITLES[view] || view;
 
-      // Destroy existing Chart.js instances
       activeCharts.forEach(c => c.destroy());
       activeCharts = [];
 
@@ -892,7 +876,6 @@
       }
 
       lucide.createIcons();
-      // Close mobile drawer if open
       const sb = document.getElementById('sidebar');
       if (!sb.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
         toggleMobileSidebar();
@@ -909,22 +892,22 @@
       const completedReqs = state.requisitions.filter(r => r.status === 'Completed (Item Issued)').length;
       const lowStockAssets = state.assets.filter(a => a.stock <= a.minStock);
       const expiringAssets = getExpiringAssets30Days();
-      const openPOs = state.purchaseOrders.filter(p => p.status !== 'Delivered (GRN completed)' && p.status !== 'Cancelled').length;
+      const pendingGRNs = state.purchaseOrders.filter(p => p.status !== 'Delivered (GRN completed)' && p.status !== 'Cancelled').length;
       const monthlyConsumption = state.issueLogs.reduce((sum, log) => sum + (log.qty * log.unitPrice), 0);
 
       ws.innerHTML = `
-        <!-- Top Welcome & Quick Actions Banner -->
-        <div class="bg-gradient-to-r from-brand-navy via-sky-900 to-brand-blue rounded-2xl p-6 text-white shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <!-- Executive Hero Banner -->
+        <div class="bg-gradient-to-r from-[#0f294a] via-sky-900 to-brand-blue rounded-2xl p-6 text-white shadow-lg flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-semibold text-sky-100 mb-2">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i> Session 2026-27 Live ERP Overview
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i> R.D. Public School • Session 2026-27 Live ERP
             </div>
             <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">Inventory & Asset Command Center</h2>
-            <p class="text-sky-100/90 text-sm mt-1">End-to-end Requisition → Multi-Item PO → Quotation Approval → GRN → Requester-Locked Issue.</p>
+            <p class="text-sky-100/90 text-sm mt-1">Excel Opening Stock Onboarding → Multi-Item PO → Quotation Approval → GRN → Requester-Locked Issue.</p>
           </div>
           <div class="flex flex-wrap gap-2.5">
-            <button onclick="navigate('requisition-form')" class="bg-white text-brand-navy hover:bg-sky-50 font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
-              <i data-lucide="file-plus-2" class="w-4 h-4 text-brand-blue"></i> Raise Requisition
+            <button onclick="navigate('assets')" class="bg-white text-[#0f294a] hover:bg-sky-50 font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i> Import Opening Stock (.xlsx)
             </button>
             <button onclick="navigate('create-po')" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
               <i data-lucide="shopping-cart" class="w-4 h-4"></i> Multi-Item PO
@@ -939,49 +922,60 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition">
             <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Stock Valuation</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Valuation</span>
               <div class="w-8 h-8 rounded-xl bg-sky-50 text-brand-blue flex items-center justify-center">
                 <i data-lucide="indian-rupee" class="w-4 h-4"></i>
               </div>
             </div>
             <div class="mt-2.5 font-display text-xl font-extrabold text-slate-900">${formatINR(totalValuation)}</div>
-            <p class="text-[11px] text-slate-500 mt-1">Across <strong class="text-slate-700">${state.assets.length}</strong> clean SKUs</p>
+            <p class="text-[11px] text-slate-500 mt-1">Across <strong class="text-slate-700">${state.assets.length}</strong> active SKUs</p>
+          </div>
+
+          <div onclick="navigate('assets')" class="cursor-pointer bg-white rounded-2xl p-4 border ${lowStockAssets.length > 0 ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200/90'} shadow-xs hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Low Stock Alerts</span>
+              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-2.5 font-display text-xl font-extrabold ${lowStockAssets.length > 0 ? 'text-rose-600' : 'text-emerald-600'}">${lowStockAssets.length} Items</div>
+            <p class="text-[11px] text-slate-500 mt-1">At or below min threshold</p>
+          </div>
+
+          <div onclick="navigate('grn')" class="cursor-pointer bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Pending GRNs</span>
+              <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <i data-lucide="truck" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="mt-2.5 font-display text-xl font-extrabold text-slate-900">${pendingGRNs} POs</div>
+            <p class="text-[11px] text-slate-500 mt-1">Open orders awaiting receipt</p>
           </div>
 
           <div onclick="navigate('requisition-list')" class="cursor-pointer bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition">
             <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Requisitions</span>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ready Requisitions</span>
               <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                 <i data-lucide="clipboard-check" class="w-4 h-4"></i>
               </div>
             </div>
             <div class="mt-2.5 flex items-baseline gap-1.5">
               <span class="font-display text-xl font-extrabold text-slate-900">${readyToIssueReqs}</span>
-              <span class="text-[11px] font-semibold text-emerald-600">Ready</span>
+              <span class="text-[11px] font-semibold text-emerald-600">To Issue</span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">${pendingReqs} Pending • <strong class="text-emerald-700">${completedReqs} Done</strong></p>
+            <p class="text-[11px] text-slate-500 mt-1">${pendingReqs} Pending • <strong class="text-emerald-700">${completedReqs} Issued</strong></p>
           </div>
 
-          <div onclick="navigate('assets')" class="cursor-pointer bg-white rounded-2xl p-4 border ${lowStockAssets.length > 0 ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200/90'} shadow-xs hover:shadow-md transition">
+          <div onclick="navigate('issue-reports')" class="cursor-pointer bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition">
             <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Low-Stock Alerts</span>
-              <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Issued Value</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
               </div>
             </div>
-            <div class="mt-2.5 font-display text-xl font-extrabold ${lowStockAssets.length > 0 ? 'text-rose-600' : 'text-emerald-600'}">${lowStockAssets.length} Items</div>
-            <p class="text-[11px] text-slate-500 mt-1">Below minimum threshold</p>
-          </div>
-
-          <div onclick="navigate('create-po')" class="cursor-pointer bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Active POs</span>
-              <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <i data-lucide="truck" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-2.5 font-display text-xl font-extrabold text-slate-900">${openPOs} POs</div>
-            <p class="text-[11px] text-slate-500 mt-1">Awaiting Quote / GRN</p>
+            <div class="mt-2.5 font-display text-xl font-extrabold text-slate-900">${formatINR(monthlyConsumption)}</div>
+            <p class="text-[11px] text-slate-500 mt-1">Verified staff consumption</p>
           </div>
 
           <div onclick="navigate('asset-management')" class="cursor-pointer bg-white rounded-2xl p-4 border ${expiringAssets.length > 0 ? 'border-orange-300 bg-orange-50/20' : 'border-slate-200/90'} shadow-xs hover:shadow-md transition">
@@ -994,78 +988,6 @@
             <div class="mt-2.5 font-display text-xl font-extrabold text-orange-600">${expiringAssets.length} Alerts</div>
             <p class="text-[11px] text-slate-500 mt-1">FEFO priority issue items</p>
           </div>
-
-          <div onclick="navigate('reports')" class="cursor-pointer bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Issued Value</span>
-              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <i data-lucide="trending-up" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-2.5 font-display text-xl font-extrabold text-slate-900">${formatINR(monthlyConsumption)}</div>
-            <p class="text-[11px] text-slate-500 mt-1">Verified staff issuance</p>
-          </div>
-        </div>
-
-        <!-- 5 Executive KPI Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Stock Valuation</span>
-              <div class="w-9 h-9 rounded-xl bg-sky-50 text-brand-blue flex items-center justify-center">
-                <i data-lucide="indian-rupee" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3 font-display text-2xl font-extrabold text-slate-900">${formatINR(totalValuation)}</div>
-            <p class="text-xs text-slate-500 mt-1">Across <strong class="text-slate-700">${state.assets.length}</strong> active SKU items</p>
-          </div>
-
-          <div onclick="navigate('requisition-list')" class="cursor-pointer bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Requisitions</span>
-              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <i data-lucide="clipboard-check" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3 flex items-baseline gap-2">
-              <span class="font-display text-2xl font-extrabold text-slate-900">${readyToIssueReqs}</span>
-              <span class="text-xs font-semibold text-emerald-600">Ready to Issue</span>
-            </div>
-            <p class="text-xs text-slate-500 mt-1">${pendingReqs} Pending • <strong class="text-emerald-700">${completedReqs} Completed</strong></p>
-          </div>
-
-          <div onclick="navigate('assets')" class="cursor-pointer bg-white rounded-2xl p-5 border ${lowStockAssets.length > 0 ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200/90'} shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Low-Stock Alerts</span>
-              <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3 font-display text-2xl font-extrabold ${lowStockAssets.length > 0 ? 'text-rose-600' : 'text-emerald-600'}">${lowStockAssets.length} Items</div>
-            <p class="text-xs text-slate-500 mt-1">At or below minimum threshold</p>
-          </div>
-
-          <div onclick="navigate('grn')" class="cursor-pointer bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pending GRNs</span>
-              <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <i data-lucide="truck" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3 font-display text-2xl font-extrabold text-slate-900">${openPOs} POs</div>
-            <p class="text-xs text-slate-500 mt-1">Approved POs awaiting receipt</p>
-          </div>
-
-          <div onclick="navigate('reports')" class="cursor-pointer bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Issued Value</span>
-              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <i data-lucide="trending-up" class="w-4 h-4"></i>
-              </div>
-            </div>
-            <div class="mt-3 font-display text-2xl font-extrabold text-slate-900">${formatINR(monthlyConsumption)}</div>
-            <p class="text-xs text-slate-500 mt-1">Verified requester consumption</p>
-          </div>
         </div>
 
         <!-- Analytics Charts Row -->
@@ -1073,8 +995,8 @@
           <div class="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h3 class="font-display font-bold text-slate-900 text-base">Category-Wise Stock Valuation</h3>
-                <p class="text-xs text-slate-500">Current asset value distribution (₹)</p>
+                <h3 class="font-display font-bold text-slate-900 text-base">Stock Valuation by Category</h3>
+                <p class="text-xs text-slate-500">Live asset valuation distribution (₹)</p>
               </div>
               <span class="text-xs font-semibold bg-sky-50 text-brand-blue px-2.5 py-1 rounded-lg">Live Ledger</span>
             </div>
@@ -1086,8 +1008,8 @@
           <div class="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h3 class="font-display font-bold text-slate-900 text-base">Monthly Procurement vs. Consumption Trend</h3>
-                <p class="text-xs text-slate-500">Session 2026-27 PO Inward vs. Department Issue (₹)</p>
+                <h3 class="font-display font-bold text-slate-900 text-base">Monthly PO Spend vs. Issue Consumption</h3>
+                <p class="text-xs text-slate-500">Session 2026-27 Inward Procurement vs. Department Consumption (₹)</p>
               </div>
               <span class="text-xs font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg">2026-27</span>
             </div>
@@ -1097,41 +1019,37 @@
           </div>
         </div>
 
-        <!-- Bottom Actionable Tables: Low Stock Watchlist & Ready-to-Issue Requisitions -->
+        <!-- Financial Accounting Sync Feed & Action Queues -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <!-- Low Stock Watchlist -->
-          <div class="lg:col-span-5 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+          <!-- Financial Accounting Sync Feed -->
+          <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-display font-bold text-slate-900 text-base flex items-center gap-2">
-                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500"></i> Low-Stock Reorder Watchlist
+                <i data-lucide="landmark" class="w-4 h-4 text-emerald-600"></i> Financial Accounting Auto-Sync Feed
               </h3>
-              <button onclick="navigate('create-po')" class="text-xs font-semibold text-brand-blue hover:underline">+ Create PO</button>
+              <span class="text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">Live Integration</span>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
                   <tr>
-                    <th class="py-2.5 px-3">Asset</th>
-                    <th class="py-2.5 px-3 text-center">Left / Min</th>
-                    <th class="py-2.5 px-3 text-right">Action</th>
+                    <th class="py-2.5 px-3">Voucher</th>
+                    <th class="py-2.5 px-3">Entry Type & Ledger</th>
+                    <th class="py-2.5 px-3 text-right">Amount</th>
+                    <th class="py-2.5 px-3 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  ${lowStockAssets.length === 0 ? `
-                    <tr><td colspan="3" class="py-6 text-center text-slate-400">All items are above minimum stock levels.</td></tr>
-                  ` : lowStockAssets.map(a => `
+                  ${state.accountingSyncLog.slice(0, 6).map(entry => `
                     <tr class="hover:bg-slate-50">
+                      <td class="py-2.5 px-3 font-mono font-bold text-brand-blue">${entry.voucherId}<div class="text-[10px] font-sans font-normal text-slate-400">${entry.date}</div></td>
                       <td class="py-2.5 px-3">
-                        <div class="font-semibold text-slate-800">${a.name}</div>
-                        <div class="text-[11px] text-slate-400">${a.code} • ${a.categoryId}</div>
+                        <div class="font-bold text-slate-800">${entry.type}</div>
+                        <div class="text-[11px] text-slate-500">${entry.ledger} (${entry.ref})</div>
                       </td>
-                      <td class="py-2.5 px-3 text-center">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-700">${a.stock} / ${a.minStock}</span>
-                      </td>
+                      <td class="py-2.5 px-3 text-right font-extrabold text-slate-900">${formatINR(entry.amount)}</td>
                       <td class="py-2.5 px-3 text-right">
-                        <button onclick="navigate('create-po', { assetId: '${a.id}' })" class="bg-brand-blue hover:bg-sky-700 text-white font-semibold px-2.5 py-1 rounded-lg transition">
-                          Reorder PO
-                        </button>
+                        <span class="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">${entry.status}</span>
                       </td>
                     </tr>
                   `).join('')}
@@ -1140,13 +1058,13 @@
             </div>
           </div>
 
-          <!-- Ready to Issue Requisitions (Requester-Locked) -->
-          <div class="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+          <!-- Ready to Issue Requisitions Queue -->
+          <div class="lg:col-span-6 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-display font-bold text-slate-900 text-base flex items-center gap-2">
-                <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> Approved Requisitions Ready for Issue
+                <i data-lucide="user-check" class="w-4 h-4 text-brand-blue"></i> Approved Requisitions Ready for Issue
               </h3>
-              <button onclick="navigate('requisition-list')" class="text-xs font-semibold text-brand-blue hover:underline">View All Requisitions</button>
+              <button onclick="navigate('requisition-list')" class="text-xs font-semibold text-brand-blue hover:underline">View All</button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
@@ -1155,7 +1073,7 @@
                     <th class="py-2.5 px-3">Slip No</th>
                     <th class="py-2.5 px-3">Requester (Locked)</th>
                     <th class="py-2.5 px-3">Item</th>
-                    <th class="py-2.5 px-3 text-center">Rem. Qty</th>
+                    <th class="py-2.5 px-3 text-center">Rem.</th>
                     <th class="py-2.5 px-3 text-right">Action</th>
                   </tr>
                 </thead>
@@ -1168,13 +1086,13 @@
                         <td class="py-2.5 px-3 font-bold text-brand-blue">${r.id}</td>
                         <td class="py-2.5 px-3">
                           <div class="font-semibold text-slate-800">${r.requesterName}</div>
-                          <div class="text-[11px] text-slate-400">${r.department} (${r.requesterRole})</div>
+                          <div class="text-[11px] text-slate-400">${r.department}</div>
                         </td>
                         <td class="py-2.5 px-3 font-medium text-slate-700">${asset ? asset.name : r.assetId}</td>
-                        <td class="py-2.5 px-3 text-center font-bold">${rem} / ${r.qty}</td>
+                        <td class="py-2.5 px-3 text-center font-bold">${rem}</td>
                         <td class="py-2.5 px-3 text-right">
-                          <button onclick="navigate('issue', { reqId: '${r.id}' })" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow-xs inline-flex items-center gap-1 transition">
-                            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> Issue
+                          <button onclick="navigate('issue', { reqId: '${r.id}' })" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1 rounded-lg shadow-xs inline-flex items-center gap-1 transition">
+                            Issue
                           </button>
                         </td>
                       </tr>
@@ -1187,7 +1105,7 @@
         </div>
       `;
 
-      // Render Chart 1: Category Valuation Doughnut
+      // Render Chart 1: Doughnut
       const catTotals = {};
       state.assets.forEach(a => {
         catTotals[a.categoryId] = (catTotals[a.categoryId] || 0) + (a.stock * a.unitPrice);
@@ -1216,7 +1134,7 @@
         }));
       }
 
-      // Render Chart 2: Monthly Trend
+      // Render Chart 2: Bar + Line Trend
       const ctx2 = document.getElementById('chart-monthly-trend');
       if (ctx2) {
         activeCharts.push(new Chart(ctx2, {
@@ -1227,11 +1145,11 @@
               {
                 label: 'PO & GRN Inward (₹)',
                 data: [48000, 62000, 39500, 85000, 54000, 173950],
-                backgroundColor: '#0284C7',
+                backgroundColor: '#0f294a',
                 borderRadius: 6
               },
               {
-                label: 'Department Issue (₹)',
+                label: 'Issue Consumption (₹)',
                 data: [31000, 44000, 35000, 58000, 41200, monthlyConsumption],
                 backgroundColor: '#10B981',
                 borderRadius: 6
@@ -1276,7 +1194,7 @@
               <input type="number" id="cat-dep-it" value="15" min="0" max="100" step="0.5" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
             </div>
             <div>
-              <button type="submit" class="w-full bg-brand-navy hover:bg-brand-blue text-white font-semibold text-sm py-2.5 px-5 rounded-xl shadow-xs transition">
+              <button type="submit" class="w-full bg-[#0f294a] hover:bg-brand-blue text-white font-semibold text-sm py-2.5 px-5 rounded-xl shadow-xs transition">
                 Add Category
               </button>
             </div>
@@ -1288,7 +1206,7 @@
             <h3 class="font-display font-bold text-orange-500 text-base">Search Entries</h3>
             <div class="flex flex-wrap items-center gap-2">
               <input type="text" id="cat-search" oninput="filterCategoryTable()" placeholder="Search category..." class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs focus:outline-none focus:border-brand-blue" />
-              <button onclick="exportCategories('csv')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">CSV</button>
+              <button onclick="exportSheetXLSX('SchoolMitra_Categories.xlsx', 'Categories', ['Category ID', 'Category Name', 'Depreciation Rate (%)', 'Depreciation Rate IT (%)', 'Created At'], state.categories.map(c => [c.id, c.name, c.depRate, c.depRateIT, c.createdAt]))" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-semibold">Excel (.xlsx)</button>
               <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">PDF / Print</button>
             </div>
           </div>
@@ -1363,87 +1281,134 @@
       navigate('categories');
     }
 
-    function exportCategories() {
-      exportTableCSV(
-        'SchoolMitra_Categories.csv',
-        ['Category ID', 'Category Name', 'Depreciation Rate (%)', 'Depreciation Rate IT (%)', 'Created At'],
-        state.categories.map(c => [c.id, c.name, c.depRate, c.depRateIT, c.createdAt])
-      );
-    }
-
     // =========================================================================
-    // 6. VIEW 3: ADD ASSETS
+    // 6. VIEW 3: ADD ASSETS & BULK OPENING STOCK EXCEL (.XLSX) IMPORTER
     // =========================================================================
     function renderAssets(ws) {
       ws.innerHTML = `
+        <!-- Panel 1: Bulk Import Opening Stock (.xlsx / .csv) via SheetJS -->
+        <div class="bg-gradient-to-br from-sky-50 via-white to-emerald-50/40 rounded-2xl p-6 border-2 border-sky-200 shadow-xs">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="max-w-2xl">
+              <div class="inline-flex items-center gap-1.5 bg-[#0f294a] text-white px-3 py-1 rounded-full text-[11px] font-bold mb-2">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i> Session Initialization Tool (SheetJS Powered)
+              </div>
+              <h2 class="font-display font-extrabold text-slate-900 text-lg">Bulk Import Opening Stock (.xlsx / .csv)</h2>
+              <p class="text-xs text-slate-600 mt-1">
+                Onboard your school's existing stock in seconds without creating dummy POs or GRNs. Download the sample Excel template, fill in your opening quantities & rates, upload for live error validation, and sync directly to inventory & Financial Accounting.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button type="button" onclick="downloadOpeningStockTemplateXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-2 transition">
+                <i data-lucide="download" class="w-4 h-4"></i> Download Sample Template (.xlsx)
+              </button>
+              <label class="cursor-pointer bg-[#0f294a] hover:bg-brand-blue text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-2 transition">
+                <i data-lucide="upload" class="w-4 h-4"></i> Upload Excel / CSV
+                <input type="file" id="excel-opening-file" accept=".xlsx,.xls,.csv" onchange="handleExcelFileUpload(event)" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Required Column Guide -->
+          <div class="mt-4 pt-3 border-t border-sky-200/70 flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="font-bold text-slate-600 mr-1">Excel Headers:</span>
+            ${['Category', 'Asset Code', 'Asset Name', 'Brand', 'Unit', 'Opening Stock Qty', 'Unit Rate', 'Minimum Stock', 'Location', 'Warranty/Expiry Date'].map(h => `
+              <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-mono text-slate-700">${h}</span>
+            `).join('')}
+          </div>
+
+          <!-- Pre-Import Validation Preview Container -->
+          <div id="excel-preview-container" class="mt-4 ${pendingExcelRows.length > 0 ? '' : 'hidden'}">
+            ${renderExcelPreviewHTML()}
+          </div>
+        </div>
+
+        <!-- Panel 2: Single Asset Entry Form -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-          <h2 class="font-display font-bold text-orange-500 text-lg mb-4">Add Asset Master</h2>
+          <h2 class="font-display font-bold text-orange-500 text-lg mb-4">Add Single Asset & Opening Balance</h2>
           <form onsubmit="handleAddAsset(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Category</label>
-              <select id="ast-cat" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm bg-white focus:outline-none focus:border-brand-blue">
+              <select id="ast-cat" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-semibold bg-white focus:outline-none focus:border-brand-blue">
                 <option value="">-- Select Category --</option>
                 ${state.categories.map(c => `<option value="${c.id}">${c.id} - ${c.name}</option>`).join('')}
               </select>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Asset Code</label>
-              <input type="text" id="ast-code" required placeholder="e.g., EL-FAN-02" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
+              <input type="text" id="ast-code" required placeholder="e.g., IT-105" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs focus:outline-none focus:border-brand-blue" />
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Asset Name</label>
-              <input type="text" id="ast-name" required placeholder="e.g., Exhaust Fan 18 Inch" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
+              <input type="text" id="ast-name" required placeholder="e.g., Projector Epson X49" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs focus:outline-none focus:border-brand-blue" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Brand</label>
-              <input type="text" id="ast-brand" placeholder="e.g., Crompton / Dell" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
+              <label class="block text-xs font-bold text-slate-700 mb-1">Brand / Make</label>
+              <input type="text" id="ast-brand" placeholder="e.g., Epson / Dell" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs focus:outline-none focus:border-brand-blue" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Unit</label>
+              <select id="ast-unit" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs bg-white">
+                <option value="Nos">Nos</option>
+                <option value="Pcs">Pcs</option>
+                <option value="Box">Box</option>
+                <option value="Ream">Ream</option>
+                <option value="Set">Set</option>
+                <option value="Can">Can</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Opening Stock Qty</label>
+              <input type="number" id="ast-stock" required value="5" min="0" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-bold focus:outline-none focus:border-brand-blue" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Unit Rate (₹)</label>
+              <input type="number" id="ast-price" required value="1500" min="0" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-bold focus:outline-none focus:border-brand-blue" />
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Minimum Stock</label>
-              <input type="number" id="ast-min" value="5" min="0" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
+              <input type="number" id="ast-min" value="2" min="0" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs focus:outline-none focus:border-brand-blue" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Opening Stock</label>
-              <input type="number" id="ast-stock" value="0" min="0" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Est. Unit Price (₹)</label>
-              <input type="number" id="ast-price" value="1000" min="0" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Default Store Location</label>
-              <select id="ast-loc" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm bg-white focus:outline-none focus:border-brand-blue">
+              <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Location</label>
+              <select id="ast-loc" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs bg-white focus:outline-none focus:border-brand-blue">
                 ${state.locations.map(l => `<option value="${l.name}">${l.name}</option>`).join('')}
               </select>
             </div>
-            <div class="sm:col-span-2 flex items-end">
-              <button type="submit" class="bg-brand-navy hover:bg-brand-blue text-white font-semibold text-sm py-2.5 px-6 rounded-xl shadow-xs transition">
-                + Add Asset
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Warranty / Expiry Date</label>
+              <input type="date" id="ast-warranty" value="2028-05-31" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs" />
+            </div>
+            <div class="sm:col-span-2 lg:col-span-5 flex items-center justify-end pt-1">
+              <button type="submit" class="bg-[#0f294a] hover:bg-brand-blue text-white font-semibold text-xs py-2.5 px-6 rounded-xl shadow-xs transition">
+                + Add Asset to Catalog
               </button>
             </div>
           </form>
         </div>
 
+        <!-- Panel 3: Searchable Asset Master Table -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h3 class="font-display font-bold text-orange-500 text-base">Check & Edit Entries</h3>
+            <h3 class="font-display font-bold text-orange-500 text-base">Asset Master & Live Opening/Current Stock</h3>
             <div class="flex flex-wrap items-center gap-2">
-              <input type="text" id="asset-search" oninput="filterAssetTable()" placeholder="Search asset code, name, brand..." class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs focus:outline-none focus:border-brand-blue" />
-              <button onclick="exportTableCSV('Assets_Master.csv', ['Code','Category','Name','Brand','Stock','MinStock','UnitPrice'], state.assets.map(a=>[a.code,a.categoryId,a.name,a.brand,a.stock,a.minStock,a.unitPrice]))" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Export CSV</button>
+              <input type="text" id="asset-search" oninput="filterAssetTable()" placeholder="Search asset code, name, brand, location..." class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs focus:outline-none focus:border-brand-blue" />
+              <button onclick="exportSheetXLSX('SchoolMitra_Assets_Master.xlsx', 'Assets', ['Category','Asset Code','Asset Name','Brand','Unit','Stock','Minimum Stock','Unit Rate','Location','Warranty/Expiry'], state.assets.map(a=>[a.categoryId,a.code,a.name,a.brand,a.unit,a.stock,a.minStock,a.unitPrice,a.location,a.warranty || a.expiry]))" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-semibold">Export Excel (.xlsx)</button>
             </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-100 text-slate-700 font-bold border-y border-slate-200">
                 <tr>
-                  <th class="py-3 px-4">Category</th>
-                  <th class="py-3 px-4">Brand</th>
-                  <th class="py-3 px-4">Asset Code</th>
-                  <th class="py-3 px-4">Asset Name</th>
-                  <th class="py-3 px-4 text-center">Current Stock</th>
-                  <th class="py-3 px-4 text-center">Minimum Stock</th>
-                  <th class="py-3 px-4 text-right">Unit Price</th>
-                  <th class="py-3 px-4 text-center">Action</th>
+                  <th class="py-3 px-3">Category</th>
+                  <th class="py-3 px-3">Asset Code</th>
+                  <th class="py-3 px-3">Asset Name & Brand</th>
+                  <th class="py-3 px-3">Location</th>
+                  <th class="py-3 px-3 text-center">Current Stock</th>
+                  <th class="py-3 px-3 text-center">Min Stock</th>
+                  <th class="py-3 px-3 text-right">Unit Rate</th>
+                  <th class="py-3 px-3 text-right">Stock Value</th>
+                  <th class="py-3 px-3 text-center">Action</th>
                 </tr>
               </thead>
               <tbody id="asset-tbody" class="divide-y divide-slate-200">
@@ -1455,24 +1420,249 @@
       `;
     }
 
+    function downloadOpeningStockTemplateXLSX() {
+      const headers = [
+        'Category',
+        'Asset Code',
+        'Asset Name',
+        'Brand',
+        'Unit',
+        'Opening Stock Qty',
+        'Unit Rate',
+        'Minimum Stock',
+        'Location',
+        'Warranty/Expiry Date'
+      ];
+      const sampleRows = [
+        ['IT', 'IT-PRJ-49', 'Projector Epson X49', 'Epson', 'Pcs', 6, 32500, 2, 'Academic Wing', '2028-05-31'],
+        ['Electrical', 'EL-LED-20', 'LED Tube Light 20W', 'Philips', 'Box', 25, 340, 5, 'Main Store', '2027-11-30'],
+        ['Stationery', 'ST-MRK-10', 'Whiteboard Marker Pack (10 Pcs)', 'Camlin', 'Box', 40, 220, 10, 'Admin Block', '2027-08-15']
+      ];
+      exportSheetXLSX('SchoolMitra_Opening_Stock_Template.xlsx', 'OpeningStock', headers, sampleRows);
+    }
+
+    function handleExcelFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rawRows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+          if (rawRows.length === 0) {
+            showToast('Uploaded file is empty. Please use the sample template.', 'error');
+            return;
+          }
+
+          const seenCodes = new Set(state.assets.map(a => a.code.toLowerCase()));
+          pendingExcelRows = rawRows.map((r, idx) => {
+            const rawCat = String(r['Category'] || r['Category ID / Name'] || '').trim();
+            const matchedCat = state.categories.find(c =>
+              c.id.toLowerCase() === rawCat.toLowerCase() || c.name.toLowerCase() === rawCat.toLowerCase()
+            );
+
+            const code = String(r['Asset Code'] || '').trim();
+            const name = cleanProductName(r['Asset Name'] || '');
+            const brand = String(r['Brand'] || r['Brand / Make'] || 'Generic').trim();
+            const unit = String(r['Unit'] || 'Nos').trim();
+            const qty = Number(r['Opening Stock Qty']);
+            const rate = Number(r['Unit Rate'] ?? r['Unit Rate (₹)']);
+            const minStock = Number(r['Minimum Stock'] || 2);
+            const location = String(r['Location'] || 'Main Store').trim();
+            const warrantyDate = String(r['Warranty/Expiry Date'] || '2028-05-31').trim();
+
+            const errors = [];
+            if (!matchedCat) errors.push(`Unknown Category "${rawCat}"`);
+            if (!code) errors.push('Missing Asset Code');
+            else if (seenCodes.has(code.toLowerCase())) errors.push(`Duplicate Asset Code "${code}"`);
+            if (!name) errors.push('Missing Asset Name');
+            if (isNaN(qty) || qty < 0 || r['Opening Stock Qty'] === '') errors.push('Invalid Opening Qty');
+            if (isNaN(rate) || rate < 0 || (r['Unit Rate'] === '' && r['Unit Rate (₹)'] === undefined)) errors.push('Invalid Unit Rate');
+
+            if (errors.length === 0 && code) {
+              seenCodes.add(code.toLowerCase());
+            }
+
+            return {
+              rowNum: idx + 2,
+              categoryId: matchedCat ? matchedCat.id : rawCat,
+              code,
+              name,
+              brand,
+              unit,
+              qty: isNaN(qty) ? 0 : qty,
+              rate: isNaN(rate) ? 0 : rate,
+              minStock: isNaN(minStock) ? 2 : minStock,
+              location,
+              warrantyDate,
+              isValid: errors.length === 0,
+              errors
+            };
+          });
+
+          const container = document.getElementById('excel-preview-container');
+          container.innerHTML = renderExcelPreviewHTML();
+          container.classList.remove('hidden');
+          lucide.createIcons();
+          showToast(`Parsed ${pendingExcelRows.length} row(s) from ${file.name}. Review validation preview below.`, 'info');
+        } catch (err) {
+          console.error(err);
+          showToast('Could not parse file. Please upload a valid .xlsx or .csv template.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderExcelPreviewHTML() {
+      if (pendingExcelRows.length === 0) return '';
+      const validRows = pendingExcelRows.filter(r => r.isValid);
+      const invalidCount = pendingExcelRows.length - validRows.length;
+      const validValuation = validRows.reduce((s, r) => s + (r.qty * r.rate), 0);
+
+      return `
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="font-display font-bold text-slate-900 text-sm">Pre-Import Validation Preview</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">${validRows.length} Valid Row(s)</span>
+              ${invalidCount > 0 ? `<span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 font-bold">${invalidCount} Error Row(s) Highlighted</span>` : ''}
+              <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-brand-navy font-bold">Opening Valuation: ${formatINR(validValuation)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="clearExcelPreview()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Discard</button>
+              <button type="button" onclick="confirmExcelImport()" ${validRows.length === 0 ? 'disabled' : ''} class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition">
+                Confirm & Import ${validRows.length} Valid Row(s)
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-64 border border-slate-200 rounded-lg">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+                <tr>
+                  <th class="py-2 px-2.5">Excel Row</th>
+                  <th class="py-2 px-2.5">Status</th>
+                  <th class="py-2 px-2.5">Category</th>
+                  <th class="py-2 px-2.5">Asset Code</th>
+                  <th class="py-2 px-2.5">Asset Name</th>
+                  <th class="py-2 px-2.5">Brand / Unit</th>
+                  <th class="py-2 px-2.5 text-center">Opening Qty</th>
+                  <th class="py-2 px-2.5 text-right">Unit Rate</th>
+                  <th class="py-2 px-2.5">Location</th>
+                  <th class="py-2 px-2.5">Warranty/Expiry</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                ${pendingExcelRows.map(r => `
+                  <tr class="${r.isValid ? 'bg-emerald-50/40' : 'bg-rose-50/80 text-rose-900'}">
+                    <td class="py-2 px-2.5 font-mono font-bold">#${r.rowNum}</td>
+                    <td class="py-2 px-2.5">
+                      ${r.isValid
+                        ? `<span class="inline-flex items-center gap-1 text-emerald-700 font-bold"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Ready</span>`
+                        : `<span class="inline-flex items-center gap-1 text-rose-700 font-bold" title="${r.errors.join(', ')}"><i data-lucide="x-circle" class="w-3.5 h-3.5"></i> ${r.errors.join('; ')}</span>`
+                      }
+                    </td>
+                    <td class="py-2 px-2.5 font-semibold">${r.categoryId}</td>
+                    <td class="py-2 px-2.5 font-mono font-bold">${r.code || '—'}</td>
+                    <td class="py-2 px-2.5 font-bold">${r.name || '—'}</td>
+                    <td class="py-2 px-2.5">${r.brand} (${r.unit})</td>
+                    <td class="py-2 px-2.5 text-center font-bold">${r.qty}</td>
+                    <td class="py-2 px-2.5 text-right font-semibold">${formatINR(r.rate)}</td>
+                    <td class="py-2 px-2.5">${r.location}</td>
+                    <td class="py-2 px-2.5">${r.warrantyDate}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function clearExcelPreview() {
+      pendingExcelRows = [];
+      const container = document.getElementById('excel-preview-container');
+      if (container) container.classList.add('hidden');
+    }
+
+    function confirmExcelImport() {
+      const validRows = pendingExcelRows.filter(r => r.isValid);
+      if (validRows.length === 0) return;
+
+      let totalOpeningVal = 0;
+      validRows.forEach((r, i) => {
+        totalOpeningVal += r.qty * r.rate;
+        state.assets.unshift({
+          id: 'AST-' + (200 + state.assets.length + i),
+          categoryId: r.categoryId,
+          code: r.code,
+          name: cleanProductName(r.name),
+          brand: r.brand || 'Generic',
+          stock: r.qty,
+          minStock: r.minStock,
+          unitPrice: r.rate,
+          unit: r.unit || 'Nos',
+          location: r.location || 'Main Store',
+          expiry: r.warrantyDate || '2028-05-31',
+          warranty: r.warrantyDate || '2028-05-31'
+        });
+
+        // Auto-add location if not in directory
+        if (r.location && !state.locations.some(l => l.name.toLowerCase() === r.location.toLowerCase())) {
+          state.locations.push({
+            id: 'LOC-0' + (state.locations.length + 1),
+            name: r.location,
+            building: 'Imported via Excel',
+            incharge: 'Store Manager',
+            capacity: '250 Items'
+          });
+        }
+      });
+
+      // Push Opening Stock Asset Ledger entry to Financial Accounting Sync Log
+      state.accountingSyncLog.unshift({
+        voucherId: 'OB-2026-00' + (state.accountingSyncLog.length + 1),
+        date: '2026-11-24',
+        type: 'Opening Stock Excel Import',
+        ref: `${validRows.length} SKUs Imported`,
+        ledger: 'Inventory Opening Stock Asset A/c',
+        amount: Math.round(totalOpeningVal),
+        status: 'Synced to Financial Accounting'
+      });
+
+      pendingExcelRows = [];
+      saveState();
+      showToast(`Imported ${validRows.length} opening stock items (${formatINR(totalOpeningVal)}) & synced to Financial Accounting!`, 'success');
+      navigate('assets');
+    }
+
     function renderAssetRows(list) {
       return list.map(a => {
         const isLow = a.stock <= a.minStock;
         return `
           <tr class="hover:bg-slate-50">
-            <td class="py-3 px-4 font-semibold text-slate-700">${a.categoryId}</td>
-            <td class="py-3 px-4 text-slate-600">${a.brand || '-'}</td>
-            <td class="py-3 px-4 font-mono font-semibold text-brand-blue">${a.code}</td>
-            <td class="py-3 px-4 font-bold text-slate-800">${a.name}</td>
-            <td class="py-3 px-4 text-center">
+            <td class="py-3 px-3 font-semibold text-slate-700">${a.categoryId}</td>
+            <td class="py-3 px-3 font-mono font-bold text-brand-blue">${a.code}</td>
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-800">${a.name}</div>
+              <div class="text-[11px] text-slate-500">${a.brand || 'Generic'} • War/Exp: ${a.warranty || a.expiry || '-'}</div>
+            </td>
+            <td class="py-3 px-3 text-slate-600 font-medium">${a.location}</td>
+            <td class="py-3 px-3 text-center">
               <span class="px-2.5 py-1 rounded-full font-bold ${isLow ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
                 ${a.stock} ${a.unit || 'Nos'} ${isLow ? '⚠️' : ''}
               </span>
             </td>
-            <td class="py-3 px-4 text-center font-semibold text-slate-600">${a.minStock}</td>
-            <td class="py-3 px-4 text-right font-semibold">${formatINR(a.unitPrice)}</td>
-            <td class="py-3 px-4 text-center space-x-1">
-              <button onclick="navigate('create-po', { assetId: '${a.id}' })" class="text-xs bg-sky-50 hover:bg-sky-100 text-brand-blue font-semibold px-2.5 py-1 rounded-lg">PO</button>
+            <td class="py-3 px-3 text-center font-semibold text-slate-600">${a.minStock}</td>
+            <td class="py-3 px-3 text-right font-semibold">${formatINR(a.unitPrice)}</td>
+            <td class="py-3 px-3 text-right font-extrabold text-slate-900">${formatINR(a.stock * a.unitPrice)}</td>
+            <td class="py-3 px-3 text-center space-x-1 whitespace-nowrap">
+              <button onclick="openQRTagModal('${a.id}')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1 rounded-lg" title="Print QR Tag">QR</button>
+              <button onclick="navigate('create-po', { assetId: '${a.id}' })" class="text-[11px] bg-sky-50 hover:bg-sky-100 text-brand-blue font-semibold px-2 py-1 rounded-lg">PO</button>
               <button onclick="deleteAsset('${a.id}')" class="text-rose-500 hover:text-rose-700 p-1 rounded-lg hover:bg-rose-50" title="Delete">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i>
               </button>
@@ -1484,28 +1674,52 @@
 
     function handleAddAsset(e) {
       e.preventDefault();
+      const code = document.getElementById('ast-code').value.trim();
+      if (state.assets.some(a => a.code.toLowerCase() === code.toLowerCase())) {
+        showToast(`Asset Code "${code}" already exists!`, 'error');
+        return;
+      }
+      const stock = parseInt(document.getElementById('ast-stock').value, 10) || 0;
+      const unitPrice = parseFloat(document.getElementById('ast-price').value) || 0;
+      const warrantyDate = document.getElementById('ast-warranty').value || '2028-05-31';
+
       const newAsset = {
-        id: 'AST-' + (100 + state.assets.length + 1),
+        id: 'AST-' + (200 + state.assets.length + 1),
         categoryId: document.getElementById('ast-cat').value,
-        code: document.getElementById('ast-code').value.trim(),
-        name: document.getElementById('ast-name').value.trim(),
+        code,
+        name: cleanProductName(document.getElementById('ast-name').value),
         brand: document.getElementById('ast-brand').value.trim() || 'Generic',
+        unit: document.getElementById('ast-unit').value,
+        stock,
         minStock: parseInt(document.getElementById('ast-min').value, 10) || 0,
-        stock: parseInt(document.getElementById('ast-stock').value, 10) || 0,
-        unitPrice: parseFloat(document.getElementById('ast-price').value) || 0,
-        unit: 'Nos',
-        location: document.getElementById('ast-loc').value
+        unitPrice,
+        location: document.getElementById('ast-loc').value,
+        warranty: warrantyDate,
+        expiry: warrantyDate
       };
       state.assets.unshift(newAsset);
+
+      if (stock > 0 && unitPrice > 0) {
+        state.accountingSyncLog.unshift({
+          voucherId: 'OB-2026-00' + (state.accountingSyncLog.length + 1),
+          date: '2026-11-24',
+          type: 'Opening Stock Asset Entry',
+          ref: `${newAsset.code} (${stock} ${newAsset.unit})`,
+          ledger: 'Inventory Opening Stock Asset A/c',
+          amount: Math.round(stock * unitPrice),
+          status: 'Synced to Financial Accounting'
+        });
+      }
+
       saveState();
-      showToast(`Asset "${newAsset.name}" added to master catalog.`, 'success');
+      showToast(`Asset "${newAsset.name}" added with ${stock} opening stock!`, 'success');
       navigate('assets');
     }
 
     function filterAssetTable() {
       const q = document.getElementById('asset-search').value.toLowerCase();
       const filtered = state.assets.filter(a =>
-        a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q) || a.brand.toLowerCase().includes(q) || a.categoryId.toLowerCase().includes(q)
+        a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q) || a.brand.toLowerCase().includes(q) || a.categoryId.toLowerCase().includes(q) || a.location.toLowerCase().includes(q)
       );
       document.getElementById('asset-tbody').innerHTML = renderAssetRows(filtered);
       lucide.createIcons();
@@ -1599,7 +1813,7 @@
                   <input type="email" id="vnd-cemail" placeholder="Contact Person Email" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:outline-none focus:border-brand-blue" />
                 </div>
                 <div>
-                  <button type="submit" class="w-full bg-brand-navy hover:bg-brand-blue text-white font-semibold text-sm py-2 px-6 rounded-xl shadow-xs transition">
+                  <button type="submit" class="w-full bg-[#0f294a] hover:bg-brand-blue text-white font-semibold text-sm py-2 px-6 rounded-xl shadow-xs transition">
                     Add Vendor
                   </button>
                 </div>
@@ -1614,7 +1828,7 @@
             <div class="flex flex-wrap items-center gap-2">
               <input type="text" id="vnd-search" oninput="filterVendors()" placeholder="Search Here..." class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs focus:outline-none focus:border-brand-blue" />
               <button onclick="copyTableText(['Vendor','Category','Mobile','GST','Contact'], state.vendors.map(v=>[v.name,v.categoryId,v.mobile,v.gst,v.contactName]))" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">Copy</button>
-              <button onclick="exportTableCSV('Vendors.csv', ['Vendor','Category','Mobile','GST','Contact'], state.vendors.map(v=>[v.name,v.categoryId,v.mobile,v.gst,v.contactName]))" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">CSV / Excel</button>
+              <button onclick="exportSheetXLSX('SchoolMitra_Vendors.xlsx', 'Vendors', ['Vendor','Category','Mobile','GST','Contact'], state.vendors.map(v=>[v.name,v.categoryId,v.mobile,v.gst,v.contactName]))" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-semibold">Excel (.xlsx)</button>
               <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">PDF</button>
             </div>
           </div>
@@ -1758,7 +1972,7 @@
               <input type="text" id="req-remarks" placeholder="Enter purpose for departmental approval..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:border-brand-blue" />
             </div>
             <div class="sm:col-span-2 lg:col-span-3 flex items-center gap-3 pt-2">
-              <button type="submit" class="bg-brand-navy hover:bg-brand-blue text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-xs transition">
+              <button type="submit" class="bg-[#0f294a] hover:bg-brand-blue text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-xs transition">
                 Submit Requisition
               </button>
               <button type="button" onclick="navigate('requisition-list')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm px-5 py-2.5 rounded-xl transition">
@@ -1816,7 +2030,6 @@
     }
 
     function renderRequisitionList(ws) {
-      // Filter based on active role perspective if a specific requester is chosen
       let visibleReqs = state.requisitions;
       if (state.activeRole.includes('Trapti')) {
         visibleReqs = state.requisitions.filter(r => r.requesterName.includes('Trapti'));
@@ -1830,7 +2043,7 @@
             <div>
               <h2 class="font-display font-bold text-slate-900 text-lg">Requisitions & Issuance Status</h2>
               <p class="text-xs text-slate-500">
-                Viewing as: <strong class="text-brand-navy">${state.activeRole}</strong> • Automatically transitions from <em>PO Created</em> to <strong class="text-emerald-700">Completed - Item Issued</strong> upon issuance.
+                Viewing as: <strong class="text-brand-navy">${state.activeRole}</strong> • Automatically transitions from <em>PO Created</em> to <strong class="text-emerald-700">Completed (Item Issued)</strong> upon issuance.
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -1839,10 +2052,10 @@
                 <option value="Pending Approval">Pending Approval</option>
                 <option value="PO Created">PO Created / Ready</option>
                 <option value="Partially Issued">Partially Issued</option>
-                <option value="Completed - Item Issued">Completed - Item Issued</option>
+                <option value="Completed (Item Issued)">Completed (Item Issued)</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
-              <button onclick="navigate('requisition-form')" class="bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+              <button onclick="navigate('requisition-form')" class="bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
                 + New Requisition
               </button>
             </div>
@@ -2045,7 +2258,6 @@
       const approvedReqs = state.requisitions.filter(r => r.status === 'Approved' || r.status === 'Pending Approval');
 
       ws.innerHTML = `
-        <!-- Create Purchase Order Form Card -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
             <div>
@@ -2060,7 +2272,6 @@
           </div>
 
           <form onsubmit="handleCreatePO(event)" class="space-y-5">
-            <!-- Header Fields matching SchoolMitra layout -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> PO No.</label>
@@ -2090,7 +2301,6 @@
               </div>
             </div>
 
-            <!-- Dynamic Multi-Item Table with Unit Price, GST%, Line Total & + Add More -->
             <div class="border border-slate-200 rounded-xl overflow-hidden">
               <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -2115,7 +2325,6 @@
                 </table>
               </div>
 
-              <!-- Live Overall Amount Summary Footer -->
               <div class="bg-slate-50 border-t border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
                 <button type="button" onclick="addPODraftRow()" class="inline-flex items-center gap-1.5 border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white font-bold text-xs px-4 py-2 rounded-xl transition">
                   <i data-lucide="plus" class="w-4 h-4"></i> + Add More
@@ -2130,7 +2339,7 @@
                     <span class="block text-[11px] font-semibold text-slate-500 uppercase">Total GST</span>
                     <span id="po-summary-gst" class="font-bold text-sm text-slate-800">₹0</span>
                   </div>
-                  <div class="bg-brand-navy text-white px-4 py-2 rounded-xl shadow-xs">
+                  <div class="bg-[#0f294a] text-white px-4 py-2 rounded-xl shadow-xs">
                     <span class="block text-[10px] font-semibold text-sky-200 uppercase tracking-wider">Overall PO Grand Total</span>
                     <span id="po-summary-grand" class="font-display font-extrabold text-lg">₹0</span>
                   </div>
@@ -2139,20 +2348,19 @@
             </div>
 
             <div class="flex justify-center pt-1">
-              <button type="submit" class="bg-brand-navy hover:bg-brand-blue text-white font-bold text-sm px-10 py-2.5 rounded-xl shadow-sm transition">
+              <button type="submit" class="bg-[#0f294a] hover:bg-brand-blue text-white font-bold text-sm px-10 py-2.5 rounded-xl shadow-sm transition">
                 Create PO
               </button>
             </div>
           </form>
         </div>
 
-        <!-- Existing POs Table (PO 252, 251, 250, 249, 248 + Newly Created) -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h3 class="font-display font-bold text-orange-500 text-base">Search Entries (Purchase Orders)</h3>
             <div class="flex flex-wrap items-center gap-2">
               <input type="text" id="po-list-search" oninput="filterPOEntries()" placeholder="Search Here..." class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs focus:outline-none focus:border-brand-blue" />
-              <button onclick="exportPOListCSV()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">CSV / Excel</button>
+              <button onclick="exportPOListXLSX()" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 text-xs font-semibold">Excel (.xlsx)</button>
               <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">PDF</button>
             </div>
           </div>
@@ -2202,7 +2410,7 @@
             </td>
             <td class="py-2.5 px-2.5">
               <select onchange="updatePODraftField(${idx}, 'unit', this.value)" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs bg-white">
-                ${['Nos', 'Ream', 'Unit', 'Set', 'Can', 'Box'].map(u => `<option value="${u}" ${row.unit === u ? 'selected' : ''}>${u}</option>`).join('')}
+                ${['Nos', 'Pcs', 'Ream', 'Unit', 'Set', 'Can', 'Box'].map(u => `<option value="${u}" ${row.unit === u ? 'selected' : ''}>${u}</option>`).join('')}
               </select>
             </td>
             <td class="py-2.5 px-2.5">
@@ -2319,7 +2527,7 @@
         </div>
         <div class="flex justify-end gap-2">
           <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700">Cancel</button>
-          <button onclick="applyPulledRequisitions()" class="px-5 py-2 rounded-xl bg-brand-navy hover:bg-brand-blue text-white text-xs font-bold">Import Selected Items to PO</button>
+          <button onclick="applyPulledRequisitions()" class="px-5 py-2 rounded-xl bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-bold">Import Selected Items to PO</button>
         </div>
       `);
     }
@@ -2377,7 +2585,7 @@
             <td class="py-3 px-3 text-center">
               <div class="inline-flex flex-wrap items-center justify-center gap-1.5">
                 ${!isDelivered && !isApproved && !isCancelled ? `
-                  <button onclick="openQuotationModal('${po.id}')" class="bg-brand-navy hover:bg-brand-blue text-white font-semibold px-2.5 py-1 rounded-lg text-[11px] transition">
+                  <button onclick="openQuotationModal('${po.id}')" class="bg-[#0f294a] hover:bg-brand-blue text-white font-semibold px-2.5 py-1 rounded-lg text-[11px] transition">
                     + Add Quotation (${(po.quotations || []).length}/3)
                   </button>
                 ` : ''}
@@ -2418,9 +2626,10 @@
       document.getElementById('po-entries-tbody').innerHTML = renderPOEntriesRows(filtered);
     }
 
-    function exportPOListCSV() {
-      exportTableCSV(
-        'SchoolMitra_PO_Register.csv',
+    function exportPOListXLSX() {
+      exportSheetXLSX(
+        'SchoolMitra_PO_Register.xlsx',
+        'PurchaseOrders',
         ['PO No', 'Vendor', 'PO Date', 'Expected Delivery', 'SubTotal', 'GST', 'Grand Total', 'Status'],
         state.purchaseOrders.map(po => {
           const fin = calcPOFinancials(po);
@@ -2505,7 +2714,7 @@
               <input type="number" id="q-vendor-amt" required value="${qList.length === 0 ? Math.round(fin.grandTotal) : ''}" placeholder="Amount" class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-bold" />
             </div>
             <div>
-              <button type="submit" class="w-full bg-brand-navy hover:bg-brand-blue text-white font-bold text-xs py-2 px-3 rounded-lg">Save Quotation</button>
+              <button type="submit" class="w-full bg-[#0f294a] hover:bg-brand-blue text-white font-bold text-xs py-2 px-3 rounded-lg">Save Quotation</button>
             </div>
           </form>
         ` : ''}
@@ -2607,246 +2816,6 @@
       `);
     }
 
-    function renderPOReports(ws) {
-      ws.innerHTML = `
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs print-area space-y-5">
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <div class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1">
-                <i data-lucide="check-circle-2" class="w-3 h-3"></i> All POs Enabled (Quotation Blocker Removed)
-              </div>
-              <h2 class="font-display font-bold text-orange-500 text-lg">Purchase Order Report — Check Entries By Date</h2>
-              <p class="text-xs text-slate-500">All created POs appear immediately regardless of quotation upload stage, with full GST, approval, and GRN tracking.</p>
-            </div>
-            <div class="no-print flex flex-wrap gap-2">
-              <button onclick="navigate('create-po')" class="bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl transition">+ Create Multi-Item PO</button>
-            </div>
-          </div>
-
-          <!-- Date, Status & Vendor Filter Bar -->
-          <div class="no-print grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
-              <input type="date" id="por-start" value="2026-08-01" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">End Date</label>
-              <input type="date" id="por-end" value="2026-12-31" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold" />
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Status</label>
-              <select id="por-status" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold">
-                <option value="ALL" selected>All Statuses (Default)</option>
-                <option value="Pending">Pending Approval</option>
-                <option value="Quotation Pending Approval">Quotation Pending Approval</option>
-                <option value="Approved">Approved (Ready for GRN)</option>
-                <option value="Delivered">Delivered (GRN completed)</option>
-                <option value="Rejected">Rejected / Cancelled</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Vendor Name</label>
-              <select id="por-vendor" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold">
-                <option value="ALL">All Vendors</option>
-                ${state.vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <button onclick="applyPOReportFilters()" class="w-full bg-brand-navy hover:bg-brand-blue text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-xs transition">
-                Find
-              </button>
-            </div>
-          </div>
-
-          <!-- Filtered PO Summary KPIs -->
-          <div id="por-kpi-strip" class="grid grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
-
-          <!-- Export Toolbar & Header -->
-          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <h3 class="font-display font-bold text-orange-500 text-base">Purchase Order Reports:</h3>
-            <div class="no-print flex flex-wrap gap-2">
-              <button onclick="exportFilteredPOReport('csv')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">CSV</button>
-              <button onclick="exportFilteredPOReport('xls')" class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold">Excel (.xls)</button>
-              <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold">Print / PDF</button>
-            </div>
-          </div>
-
-          <!-- Detailed PO Report Table -->
-          <div class="overflow-x-auto border border-slate-200 rounded-xl">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-3">PO No</th>
-                  <th class="py-3 px-3">PO Date</th>
-                  <th class="py-3 px-3">Vendor Name</th>
-                  <th class="py-3 px-3">Linked Req No</th>
-                  <th class="py-3 px-3">Items Summary</th>
-                  <th class="py-3 px-3 text-right">Sub-Total (₹)</th>
-                  <th class="py-3 px-3 text-right">GST (₹)</th>
-                  <th class="py-3 px-3 text-right">Overall Amount (₹)</th>
-                  <th class="py-3 px-3">Quotation Status</th>
-                  <th class="py-3 px-3">Approval & GRN Status</th>
-                  <th class="py-3 px-3 text-right no-print">Action</th>
-                </tr>
-              </thead>
-              <tbody id="por-tbody" class="divide-y divide-slate-200"></tbody>
-            </table>
-          </div>
-
-          <!-- Financial Accounting Vendor Payable Sync Section -->
-          <div class="pt-2">
-            <h3 class="font-display font-bold text-brand-navy text-sm mb-2.5 flex items-center gap-2">
-              <i data-lucide="landmark" class="w-4 h-4 text-emerald-600"></i> Financial Accounting — Vendor Payable Voucher Sync Log
-            </h3>
-            <div class="overflow-x-auto border border-slate-200 rounded-xl">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-emerald-50 text-emerald-900 font-bold border-b border-emerald-100">
-                  <tr>
-                    <th class="py-2.5 px-4">Accounting Voucher</th>
-                    <th class="py-2.5 px-4">Date</th>
-                    <th class="py-2.5 px-4">Ref PO No</th>
-                    <th class="py-2.5 px-4">Vendor Ledger</th>
-                    <th class="py-2.5 px-4 text-right">Payable Amount</th>
-                    <th class="py-2.5 px-4">Sync Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200">
-                  ${state.accountingPayables.map(ap => `
-                    <tr>
-                      <td class="py-2.5 px-4 font-mono font-bold text-brand-blue">${ap.voucherId}</td>
-                      <td class="py-2.5 px-4">${ap.date}</td>
-                      <td class="py-2.5 px-4 font-bold">PO #${ap.poId}</td>
-                      <td class="py-2.5 px-4 font-semibold">${ap.vendorName}</td>
-                      <td class="py-2.5 px-4 text-right font-extrabold">${formatINR(ap.amount)}</td>
-                      <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">${ap.status}</span></td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-      applyPOReportFilters();
-    }
-
-    function getFilteredPOsForReport() {
-      const start = document.getElementById('por-start')?.value || '2000-01-01';
-      const end = document.getElementById('por-end')?.value || '2099-12-31';
-      const status = document.getElementById('por-status')?.value || 'ALL';
-      const vendorId = document.getElementById('por-vendor')?.value || 'ALL';
-
-      return state.purchaseOrders.filter(po => {
-        if (po.date < start || po.date > end) return false;
-        if (vendorId !== 'ALL' && po.vendorId !== vendorId) return false;
-        if (status === 'Pending' && !po.status.includes('Pending approval')) return false;
-        if (status === 'Quotation Pending Approval' && !po.status.includes('Quotation Uploaded')) return false;
-        if (status === 'Approved' && !po.status.includes('Approved (Ready for GRN)')) return false;
-        if (status === 'Delivered' && !po.status.includes('Delivered')) return false;
-        if (status === 'Rejected' && !po.status.includes('Cancelled')) return false;
-        return true;
-      });
-    }
-
-    function applyPOReportFilters() {
-      const filtered = getFilteredPOsForReport();
-      let totalSub = 0, totalGst = 0, totalGrand = 0;
-
-      filtered.forEach(po => {
-        const fin = calcPOFinancials(po);
-        totalSub += fin.subTotal;
-        totalGst += fin.totalGst;
-        totalGrand += fin.grandTotal;
-      });
-
-      const kpiStrip = document.getElementById('por-kpi-strip');
-      if (kpiStrip) {
-        kpiStrip.innerHTML = `
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
-            <span class="text-[11px] font-bold uppercase text-slate-400">Filtered PO Count</span>
-            <div class="font-display text-xl font-extrabold text-slate-900 mt-1">${filtered.length} POs</div>
-          </div>
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
-            <span class="text-[11px] font-bold uppercase text-slate-400">Total Base Value</span>
-            <div class="font-display text-xl font-extrabold text-slate-800 mt-1">${formatINR(totalSub)}</div>
-          </div>
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
-            <span class="text-[11px] font-bold uppercase text-slate-400">Total GST Amount</span>
-            <div class="font-display text-xl font-extrabold text-sky-700 mt-1">${formatINR(totalGst)}</div>
-          </div>
-          <div class="bg-brand-navy text-white rounded-xl p-3.5 shadow-xs">
-            <span class="text-[11px] font-bold uppercase text-sky-200">Overall PO Grand Total</span>
-            <div class="font-display text-xl font-extrabold mt-1">${formatINR(totalGrand)}</div>
-          </div>
-        `;
-      }
-
-      const tbody = document.getElementById('por-tbody');
-      if (!tbody) return;
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-400">No purchase orders match the selected date, status, or vendor filter.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(po => {
-        const vendor = getVendor(po.vendorId);
-        const fin = calcPOFinancials(po);
-        const qCount = (po.quotations || []).length;
-        const grnRec = state.grnRecords.find(g => g.poId === po.id);
-        const itemSummary = (po.items || []).map(it => {
-          const a = getAsset(it.assetId);
-          return `${a ? a.name : it.assetId} (${it.qty})`;
-        }).join(', ');
-
-        return `
-          <tr class="hover:bg-slate-50 align-middle">
-            <td class="py-3 px-3 font-bold text-brand-blue">#${po.id}</td>
-            <td class="py-3 px-3 whitespace-nowrap">${po.date}</td>
-            <td class="py-3 px-3 font-semibold text-slate-800">${vendor ? vendor.name : po.vendorId}</td>
-            <td class="py-3 px-3 font-mono text-[11px]">${(po.linkedReqs && po.linkedReqs.length) ? po.linkedReqs.join(', ') : 'Direct PO'}</td>
-            <td class="py-3 px-3 max-w-[210px] truncate" title="${itemSummary}">${itemSummary}</td>
-            <td class="py-3 px-3 text-right font-medium">${formatINR(fin.subTotal)}</td>
-            <td class="py-3 px-3 text-right text-slate-600">${formatINR(fin.totalGst)}</td>
-            <td class="py-3 px-3 text-right font-extrabold text-brand-navy">${formatINR(fin.grandTotal)}</td>
-            <td class="py-3 px-3 whitespace-nowrap">
-              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${qCount > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-600'}">
-                ${qCount > 0 ? `${qCount} Quote(s) Added` : 'No Quote Yet'}
-              </span>
-            </td>
-            <td class="py-3 px-3">
-              <div class="font-bold text-[11px] ${po.status.includes('Delivered') ? 'text-emerald-700' : po.status.includes('Approved') ? 'text-sky-700' : 'text-amber-700'}">${po.status}</div>
-              ${grnRec ? `<div class="text-[10px] font-mono text-slate-500">GRN: ${grnRec.id}</div>` : ''}
-            </td>
-            <td class="py-3 px-3 text-right whitespace-nowrap no-print">
-              <button onclick="openViewPOModal('${po.id}')" class="border border-sky-300 bg-white hover:bg-sky-50 text-brand-blue font-semibold px-2.5 py-1 rounded-lg text-[11px]">View PO</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function exportFilteredPOReport(ext) {
-      const filtered = getFilteredPOsForReport();
-      const headers = ['PO No', 'PO Date', 'Vendor Name', 'Linked Req No', 'Items', 'Sub-Total', 'GST', 'Overall Amount', 'Quotation Status', 'Approval & GRN Status'];
-      const rows = filtered.map(po => {
-        const fin = calcPOFinancials(po);
-        const items = (po.items || []).map(it => `${getAsset(it.assetId)?.name || it.assetId} x${it.qty}`).join('; ');
-        return [
-          po.id,
-          po.date,
-          getVendor(po.vendorId)?.name || po.vendorId,
-          (po.linkedReqs || []).join(', ') || 'Direct PO',
-          items,
-          fin.subTotal,
-          fin.totalGst,
-          fin.grandTotal,
-          `${(po.quotations || []).length} Quote(s)`,
-          po.status
-        ];
-      });
-      exportTableCSV(`SchoolMitra_PO_Report.${ext}`, headers, rows);
-    }
-
     // =========================================================================
     // 10. VIEW 7: PO-LINKED MULTI-ITEM GRN (GOODS RECEIPT NOTE)
     // =========================================================================
@@ -2869,7 +2838,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
             <div>
               <h2 class="font-display font-bold text-orange-500 text-lg">GRN (Goods Receipt Note)</h2>
-              <p class="text-xs text-slate-500">Selecting a PO auto-loads all PO line items, quantities, unit prices, expiry & warranty dates, and syncs Vendor Payable to Financial Accounting.</p>
+              <p class="text-xs text-slate-500">Selecting an approved PO auto-populates all PO line items, quantities, unit prices, and warranty/expiry dates, and syncs a Vendor Payable voucher to Financial Accounting.</p>
             </div>
             <div class="w-full sm:w-80">
               <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-navy mb-1">Select Approved PO</label>
@@ -2914,7 +2883,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200">
-                  ${poItems.map((it, idx) => {
+                  ${poItems.map((it) => {
                     const asset = getAsset(it.assetId);
                     return `
                       <tr class="grn-line-row" data-asset="${it.assetId}" data-cat="${it.categoryId}" data-gst="${it.gst || 18}">
@@ -2944,7 +2913,7 @@
             </div>
 
             <div class="pt-1">
-              <button type="submit" class="bg-brand-navy hover:bg-emerald-600 text-white font-bold text-sm px-8 py-2.5 rounded-xl shadow-xs transition">
+              <button type="submit" class="bg-[#0f294a] hover:bg-emerald-600 text-white font-bold text-sm px-8 py-2.5 rounded-xl shadow-xs transition">
                 Submit GRN, Update Stock & Post Accounting Payable
               </button>
             </div>
@@ -2980,7 +2949,7 @@
         totalPayable += qty * unitPrice * (1 + gst / 100);
 
         state.grnRecords.unshift({
-          id: 'GRN-2026-0' + (16 + state.grnRecords.length),
+          id: 'GRN-2026-0' + (17 + state.grnRecords.length),
           poId: poId || 'MANUAL',
           date: grnDate,
           categoryId: catId,
@@ -3002,11 +2971,12 @@
         }
       }
 
-      state.accountingPayables.unshift({
-        voucherId: 'AP-2026-0' + (89 + state.accountingPayables.length),
+      state.accountingSyncLog.unshift({
+        voucherId: 'AP-2026-0' + (89 + state.accountingSyncLog.length),
         date: grnDate,
-        poId: poId || 'MANUAL',
-        vendorName,
+        type: 'Vendor Payable Voucher',
+        ref: poId ? `PO #${poId}` : 'Manual GRN',
+        ledger: vendorName,
         amount: Math.round(totalPayable),
         status: 'Posted to Financial Accounting'
       });
@@ -3014,222 +2984,6 @@
       saveState();
       showToast(`GRN Completed! Stock updated & Payable (${formatINR(totalPayable)}) synced to Financial Accounting.`, 'success');
       navigate('po-reports');
-    }
-
-    function renderPOReports(ws) {
-      ws.innerHTML = `
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 class="font-display font-bold text-slate-900 text-lg">Purchase Order (PO) Reports</h2>
-              <p class="text-xs text-slate-500">Click "Proceed to GRN" on any Approved PO to auto-load items into Goods Receipt.</p>
-            </div>
-            <button onclick="navigate('create-po')" class="bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl">+ Create PO</button>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-100 text-slate-700 font-bold border-y border-slate-200">
-                <tr>
-                  <th class="py-3 px-4">PO Number</th>
-                  <th class="py-3 px-4">Date</th>
-                  <th class="py-3 px-4">Vendor</th>
-                  <th class="py-3 px-4">Items Ordered</th>
-                  <th class="py-3 px-4 text-right">Total Value (Incl. GST)</th>
-                  <th class="py-3 px-4 text-center">Status</th>
-                  <th class="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200">
-                ${state.purchaseOrders.map(po => {
-                  const vendor = getVendor(po.vendorId);
-                  const sub = po.items.reduce((s, it) => s + (it.qty * it.unitPrice), 0);
-                  const grand = sub * (1 + (po.gstPercent || 0) / 100);
-                  const itemDesc = po.items.map(it => {
-                    const a = getAsset(it.assetId);
-                    return `${a ? a.name : it.assetId} × ${it.qty}`;
-                  }).join(', ');
-                  return `
-                    <tr class="hover:bg-slate-50">
-                      <td class="py-3 px-4 font-bold text-brand-blue">${po.id}</td>
-                      <td class="py-3 px-4">${po.date}</td>
-                      <td class="py-3 px-4 font-semibold text-slate-800">${vendor ? vendor.name : po.vendorId}</td>
-                      <td class="py-3 px-4">${itemDesc}</td>
-                      <td class="py-3 px-4 text-right font-bold">${formatINR(grand)}</td>
-                      <td class="py-3 px-4 text-center">
-                        <span class="px-2.5 py-1 rounded-full font-bold ${po.status === 'GRN Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                          ${po.status}
-                        </span>
-                      </td>
-                      <td class="py-3 px-4 text-right">
-                        ${po.status !== 'GRN Completed' ? `
-                          <button onclick="navigate('grn', { poId: '${po.id}' })" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg transition">
-                            Proceed to GRN
-                          </button>
-                        ` : `<span class="text-slate-400 font-semibold">Stock Inwarded</span>`}
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-
-    // =========================================================================
-    // 10. VIEW 7: GRN (GOODS RECEIPT NOTE — AUTO-LINKED TO PO)
-    // =========================================================================
-    function renderGRN(ws, params = {}) {
-      const openPOs = state.purchaseOrders.filter(p => p.status !== 'GRN Completed');
-      const selectedPO = params.poId ? state.purchaseOrders.find(p => p.id === params.poId) : openPOs[0];
-      const firstItem = selectedPO ? selectedPO.items[0] : null;
-      const preAsset = firstItem ? getAsset(firstItem.assetId) : null;
-
-      ws.innerHTML = `
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
-            <div>
-              <h2 class="font-display font-bold text-orange-500 text-lg">GRN (Goods Receipt Note)</h2>
-              <p class="text-xs text-slate-500">Select an Approved PO below to auto-populate Category, Asset, Quantity, and Price Per Unit.</p>
-            </div>
-            <div class="w-full sm:w-80">
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-brand-navy mb-1">Auto-Load from Approved PO</label>
-              <select id="grn-po-select" onchange="handleGRNPOSelect(this.value)" class="w-full rounded-xl border-2 border-sky-300 bg-sky-50/60 px-3.5 py-2 text-xs font-bold text-brand-navy focus:outline-none">
-                <option value="">-- Manual GRN (No PO Linked) --</option>
-                ${openPOs.map(p => {
-                  const v = getVendor(p.vendorId);
-                  return `<option value="${p.id}" ${selectedPO && selectedPO.id === p.id ? 'selected' : ''}>${p.id} — ${v ? v.name : p.vendorId}</option>`;
-                }).join('')}
-              </select>
-            </div>
-          </div>
-
-          <form onsubmit="handleSubmitGRN(event)" class="space-y-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Category</label>
-                <select id="grn-cat" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm bg-white">
-                  ${state.categories.map(c => `<option value="${c.id}" ${firstItem && firstItem.categoryId === c.id ? 'selected' : ''}>${c.id} - ${c.name}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Assets</label>
-                <select id="grn-asset" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm bg-white">
-                  ${state.assets.map(a => `<option value="${a.id}" ${firstItem && firstItem.assetId === a.id ? 'selected' : ''}>${a.name} (${a.code})</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Added On Date</label>
-                <input type="date" id="grn-date" required value="2026-11-24" class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm" />
-              </div>
-            </div>
-
-            <div>
-              <h3 class="font-display font-bold text-orange-500 text-sm mb-3">Add Specification & Valuation</h3>
-              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Variant</label>
-                  <input type="text" id="grn-variant" value="Standard" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Unit</label>
-                  <input type="text" id="grn-unit" value="${preAsset ? preAsset.unit : 'Nos'}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Color</label>
-                  <input type="text" id="grn-color" placeholder="e.g., White" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1"><span class="text-rose-500">*</span> Quantity</label>
-                  <input type="number" id="grn-qty" required min="1" value="${firstItem ? firstItem.qty : 1}" oninput="calcGRNBookValue()" class="w-full rounded-xl border border-sky-300 bg-sky-50/40 px-3 py-2 text-xs font-bold" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1"><span class="text-rose-500">*</span> Price Per Unit (₹)</label>
-                  <input type="number" id="grn-price" required min="0" value="${firstItem ? firstItem.unitPrice : 0}" oninput="calcGRNBookValue()" class="w-full rounded-xl border border-sky-300 bg-sky-50/40 px-3 py-2 text-xs font-bold" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Book Value (₹)</label>
-                  <input type="number" id="grn-book" readonly value="${firstItem ? firstItem.qty * firstItem.unitPrice : 0}" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Model / Make</label>
-                  <input type="text" id="grn-make" value="${preAsset ? preAsset.brand : ''}" placeholder="Make / Brand" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Warranty Date</label>
-                  <input type="date" id="grn-warranty" value="2027-11-24" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Expiry Date</label>
-                  <input type="date" id="grn-expiry" value="2029-11-24" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-                <div class="col-span-2 sm:col-span-3">
-                  <label class="block text-[11px] font-bold text-slate-600 mb-1">Asset Description / Challan Note</label>
-                  <input type="text" id="grn-desc" value="${selectedPO ? 'Received against ' + selectedPO.id : ''}" placeholder="Invoice / Challan details..." class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
-                </div>
-              </div>
-            </div>
-
-            <div class="pt-2">
-              <button type="submit" class="bg-brand-navy hover:bg-brand-blue text-white font-semibold text-sm px-8 py-2.5 rounded-xl shadow-xs transition">
-                Submit GRN & Update Stock
-              </button>
-            </div>
-          </form>
-        </div>
-      `;
-    }
-
-    function handleGRNPOSelect(poId) {
-      navigate('grn', { poId });
-    }
-
-    function calcGRNBookValue() {
-      const q = parseInt(document.getElementById('grn-qty').value, 10) || 0;
-      const p = parseFloat(document.getElementById('grn-price').value) || 0;
-      document.getElementById('grn-book').value = q * p;
-    }
-
-    function handleSubmitGRN(e) {
-      e.preventDefault();
-      const poId = document.getElementById('grn-po-select').value;
-      const assetId = document.getElementById('grn-asset').value;
-      const qty = parseInt(document.getElementById('grn-qty').value, 10);
-      const unitPrice = parseFloat(document.getElementById('grn-price').value);
-
-      const asset = getAsset(assetId);
-      if (asset) {
-        asset.stock += qty;
-        if (unitPrice > 0) asset.unitPrice = unitPrice;
-      }
-
-      if (poId) {
-        const po = state.purchaseOrders.find(p => p.id === poId);
-        if (po) po.status = 'GRN Completed';
-      }
-
-      state.grnRecords.unshift({
-        id: 'GRN-2026-0' + (16 + state.grnRecords.length),
-        poId: poId || 'MANUAL',
-        date: document.getElementById('grn-date').value,
-        categoryId: document.getElementById('grn-cat').value,
-        assetId,
-        variant: document.getElementById('grn-variant').value,
-        unit: document.getElementById('grn-unit').value,
-        color: document.getElementById('grn-color').value,
-        qty,
-        unitPrice,
-        bookValue: qty * unitPrice,
-        make: document.getElementById('grn-make').value,
-        warranty: document.getElementById('grn-warranty').value,
-        expiry: document.getElementById('grn-expiry').value,
-        description: document.getElementById('grn-desc').value
-      });
-
-      saveState();
-      showToast(`GRN verified! +${qty} added to ${asset ? asset.name : assetId} stock.`, 'success');
-      navigate('assets');
     }
 
     // =========================================================================
@@ -3251,7 +3005,7 @@
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
             <div>
               <h2 class="font-display font-bold text-orange-500 text-lg">Allocate & Issue Assets</h2>
-              <p class="text-xs text-slate-500">Strict Governance Rule: When a Requisition Slip is linked, recipient Role & Name are locked to the original requester.</p>
+              <p class="text-xs text-slate-500">Strict Governance Rule: When a Requisition Slip is linked, recipient Role, User Name & Contact are locked to the original requester.</p>
             </div>
             ${lockedReq ? `
               <div class="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-1.5 rounded-xl text-xs font-bold">
@@ -3267,7 +3021,6 @@
           </div>
 
           <form onsubmit="handleIssueAsset(event)" class="space-y-5">
-            <!-- Row 1: Asset & Stock Validation -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Requisition Slip No</label>
@@ -3302,7 +3055,6 @@
               </div>
             </div>
 
-            <!-- Row 2: Requester Locked Details -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-1">
               <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1">Store Location</label>
@@ -3326,7 +3078,7 @@
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Contact Number</label>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Contact Number ${lockedReq ? '<span class="text-[10px] text-emerald-600">(Locked)</span>' : ''}</label>
                 <input type="tel" id="iss-contact" value="${lockedReq ? lockedReq.contact : ''}" placeholder="Mobile Number" ${lockedReq ? 'readonly' : ''} class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs ${lockedReq ? 'bg-slate-100 text-slate-600 cursor-not-allowed' : 'bg-white'}" />
               </div>
 
@@ -3340,14 +3092,13 @@
               <div class="text-xs text-slate-500">
                 ${lockedReq ? `Requisition <strong>${lockedReq.id}</strong> requested <strong>${lockedReq.qty}</strong> unit(s). Remaining balance: <strong>${remainingReqQty}</strong>.` : 'Ad-hoc issuance logs directly against department inventory.'}
               </div>
-              <button type="submit" class="bg-brand-navy hover:bg-emerald-600 text-white font-semibold text-sm px-8 py-2.5 rounded-xl shadow-sm transition">
+              <button type="submit" class="bg-[#0f294a] hover:bg-emerald-600 text-white font-semibold text-sm px-8 py-2.5 rounded-xl shadow-sm transition">
                 Confirm & Issue Asset
               </button>
             </div>
           </form>
         </div>
 
-        <!-- Bottom Approved Requisitions Table (Matching Screenshot Layout) -->
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
           <h3 class="font-display font-bold text-orange-500 text-base mb-3">Approved Requisitions Queue</h3>
           <div class="overflow-x-auto">
@@ -3423,7 +3174,6 @@
         const req = state.requisitions.find(r => r.id === reqId);
         if (!req) return;
 
-        // Enforce strict requester identity check
         if (req.requesterName !== userName) {
           showToast('Security violation: Issue blocked. Recipient must match original requester!', 'error');
           return;
@@ -3452,7 +3202,6 @@
         });
       }
 
-      // Deduct inventory stock
       asset.stock -= qty;
 
       state.issueLogs.unshift({
@@ -3472,13 +3221,220 @@
       });
 
       saveState();
-      showToast(`Issued ${qty} × ${asset.name} to ${userName}. Requisition updated to Completed!`, 'success');
+      showToast(`Issued ${qty} × ${asset.name} to ${userName}. Requisition updated to Completed (Item Issued)!`, 'success');
       navigate('requisition-list');
     }
 
     // =========================================================================
-    // 11B. VIEW 8B: DEDICATED ISSUE / CONSUMPTION REPORT
+    // 12. VIEW 9: PO REPORTS & DEDICATED ISSUE/CONSUMPTION REPORT
     // =========================================================================
+    function renderPOReports(ws) {
+      ws.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs print-area space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <div class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-1">
+                <i data-lucide="check-circle-2" class="w-3 h-3"></i> All POs Enabled (Quotation Blocker Removed)
+              </div>
+              <h2 class="font-display font-bold text-orange-500 text-lg">Purchase Order Report — Check Entries By Date</h2>
+              <p class="text-xs text-slate-500">All created POs appear immediately regardless of quotation upload stage, with full Sub-Total, GST, Overall Amount, and GRN tracking.</p>
+            </div>
+            <div class="no-print flex flex-wrap gap-2">
+              <button onclick="navigate('create-po')" class="bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl transition">+ Create Multi-Item PO</button>
+            </div>
+          </div>
+
+          <div class="no-print grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
+              <input type="date" id="por-start" value="2026-08-01" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">End Date</label>
+              <input type="date" id="por-end" value="2026-12-31" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Status</label>
+              <select id="por-status" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold">
+                <option value="ALL" selected>All Statuses (Default)</option>
+                <option value="Pending">Pending Approval</option>
+                <option value="Quotation Pending Approval">Quotation Pending Approval</option>
+                <option value="Approved">Approved (Ready for GRN)</option>
+                <option value="Delivered">Delivered (GRN completed)</option>
+                <option value="Rejected">Rejected / Cancelled</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Vendor Name</label>
+              <select id="por-vendor" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold">
+                <option value="ALL">All Vendors</option>
+                ${state.vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <button onclick="applyPOReportFilters()" class="w-full bg-[#0f294a] hover:bg-brand-blue text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-xs transition">
+                Find
+              </button>
+            </div>
+          </div>
+
+          <div id="por-kpi-strip" class="grid grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <h3 class="font-display font-bold text-orange-500 text-base">Purchase Order Reports:</h3>
+            <div class="no-print flex flex-wrap gap-2">
+              <button onclick="exportFilteredPOReport('csv')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">CSV</button>
+              <button onclick="exportFilteredPOReport('xlsx')" class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold">Excel (.xlsx)</button>
+              <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-semibold">Print / PDF</button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">PO No</th>
+                  <th class="py-3 px-3">PO Date</th>
+                  <th class="py-3 px-3">Vendor Name</th>
+                  <th class="py-3 px-3">Linked Req No</th>
+                  <th class="py-3 px-3">Items Summary</th>
+                  <th class="py-3 px-3 text-right">Sub-Total (₹)</th>
+                  <th class="py-3 px-3 text-right">GST (₹)</th>
+                  <th class="py-3 px-3 text-right">Overall Amount (₹)</th>
+                  <th class="py-3 px-3">Quotation Status</th>
+                  <th class="py-3 px-3">Approval & GRN Status</th>
+                  <th class="py-3 px-3 text-right no-print">Action</th>
+                </tr>
+              </thead>
+              <tbody id="por-tbody" class="divide-y divide-slate-200"></tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      applyPOReportFilters();
+    }
+
+    function getFilteredPOsForReport() {
+      const start = document.getElementById('por-start')?.value || '2000-01-01';
+      const end = document.getElementById('por-end')?.value || '2099-12-31';
+      const status = document.getElementById('por-status')?.value || 'ALL';
+      const vendorId = document.getElementById('por-vendor')?.value || 'ALL';
+
+      return state.purchaseOrders.filter(po => {
+        if (po.date < start || po.date > end) return false;
+        if (vendorId !== 'ALL' && po.vendorId !== vendorId) return false;
+        if (status === 'Pending' && !po.status.includes('Pending approval')) return false;
+        if (status === 'Quotation Pending Approval' && !po.status.includes('Quotation Uploaded')) return false;
+        if (status === 'Approved' && !po.status.includes('Approved (Ready for GRN)')) return false;
+        if (status === 'Delivered' && !po.status.includes('Delivered')) return false;
+        if (status === 'Rejected' && !po.status.includes('Cancelled')) return false;
+        return true;
+      });
+    }
+
+    function applyPOReportFilters() {
+      const filtered = getFilteredPOsForReport();
+      let totalSub = 0, totalGst = 0, totalGrand = 0;
+
+      filtered.forEach(po => {
+        const fin = calcPOFinancials(po);
+        totalSub += fin.subTotal;
+        totalGst += fin.totalGst;
+        totalGrand += fin.grandTotal;
+      });
+
+      const kpiStrip = document.getElementById('por-kpi-strip');
+      if (kpiStrip) {
+        kpiStrip.innerHTML = `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+            <span class="text-[11px] font-bold uppercase text-slate-400">Filtered PO Count</span>
+            <div class="font-display text-xl font-extrabold text-slate-900 mt-1">${filtered.length} POs</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+            <span class="text-[11px] font-bold uppercase text-slate-400">Total Base Value</span>
+            <div class="font-display text-xl font-extrabold text-slate-800 mt-1">${formatINR(totalSub)}</div>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+            <span class="text-[11px] font-bold uppercase text-slate-400">Total GST Amount</span>
+            <div class="font-display text-xl font-extrabold text-sky-700 mt-1">${formatINR(totalGst)}</div>
+          </div>
+          <div class="bg-[#0f294a] text-white rounded-xl p-3.5 shadow-xs">
+            <span class="text-[11px] font-bold uppercase text-sky-200">Overall PO Grand Total</span>
+            <div class="font-display text-xl font-extrabold mt-1">${formatINR(totalGrand)}</div>
+          </div>
+        `;
+      }
+
+      const tbody = document.getElementById('por-tbody');
+      if (!tbody) return;
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-400">No purchase orders match the selected date, status, or vendor filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(po => {
+        const vendor = getVendor(po.vendorId);
+        const fin = calcPOFinancials(po);
+        const qCount = (po.quotations || []).length;
+        const grnRec = state.grnRecords.find(g => g.poId === po.id);
+        const itemSummary = (po.items || []).map(it => {
+          const a = getAsset(it.assetId);
+          return `${a ? a.name : it.assetId} (${it.qty})`;
+        }).join(', ');
+
+        return `
+          <tr class="hover:bg-slate-50 align-middle">
+            <td class="py-3 px-3 font-bold text-brand-blue">#${po.id}</td>
+            <td class="py-3 px-3 whitespace-nowrap">${po.date}</td>
+            <td class="py-3 px-3 font-semibold text-slate-800">${vendor ? vendor.name : po.vendorId}</td>
+            <td class="py-3 px-3 font-mono text-[11px]">${(po.linkedReqs && po.linkedReqs.length) ? po.linkedReqs.join(', ') : 'Direct PO'}</td>
+            <td class="py-3 px-3 max-w-[210px] truncate" title="${itemSummary}">${itemSummary}</td>
+            <td class="py-3 px-3 text-right font-medium">${formatINR(fin.subTotal)}</td>
+            <td class="py-3 px-3 text-right text-slate-600">${formatINR(fin.totalGst)}</td>
+            <td class="py-3 px-3 text-right font-extrabold text-brand-navy">${formatINR(fin.grandTotal)}</td>
+            <td class="py-3 px-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${qCount > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-600'}">
+                ${qCount > 0 ? `${qCount} Quote(s) Added` : 'No Quote Yet'}
+              </span>
+            </td>
+            <td class="py-3 px-3">
+              <div class="font-bold text-[11px] ${po.status.includes('Delivered') ? 'text-emerald-700' : po.status.includes('Approved') ? 'text-sky-700' : 'text-amber-700'}">${po.status}</div>
+              ${grnRec ? `<div class="text-[10px] font-mono text-slate-500">GRN: ${grnRec.id}</div>` : ''}
+            </td>
+            <td class="py-3 px-3 text-right whitespace-nowrap no-print">
+              <button onclick="openViewPOModal('${po.id}')" class="border border-sky-300 bg-white hover:bg-sky-50 text-brand-blue font-semibold px-2.5 py-1 rounded-lg text-[11px]">View PO</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportFilteredPOReport(fmt) {
+      const filtered = getFilteredPOsForReport();
+      const headers = ['PO No', 'PO Date', 'Vendor Name', 'Linked Req No', 'Items', 'Sub-Total', 'GST', 'Overall Amount', 'Quotation Status', 'Approval & GRN Status'];
+      const rows = filtered.map(po => {
+        const fin = calcPOFinancials(po);
+        const items = (po.items || []).map(it => `${getAsset(it.assetId)?.name || it.assetId} x${it.qty}`).join('; ');
+        return [
+          po.id,
+          po.date,
+          getVendor(po.vendorId)?.name || po.vendorId,
+          (po.linkedReqs || []).join(', ') || 'Direct PO',
+          items,
+          fin.subTotal,
+          fin.totalGst,
+          fin.grandTotal,
+          `${(po.quotations || []).length} Quote(s)`,
+          po.status
+        ];
+      });
+      if (fmt === 'xlsx') {
+        exportSheetXLSX('SchoolMitra_PO_Report.xlsx', 'POReport', headers, rows);
+      } else {
+        exportTableCSV('SchoolMitra_PO_Report.csv', headers, rows);
+      }
+    }
+
     function renderIssueReports(ws) {
       const uniqueDepts = [...new Set(state.issueLogs.map(l => l.department).filter(Boolean))];
 
@@ -3494,7 +3450,6 @@
             </div>
           </div>
 
-          <!-- Multi-Criteria Filter Bar -->
           <div class="no-print grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end bg-slate-50 p-4 rounded-xl border border-slate-200">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Start Date</label>
@@ -3530,26 +3485,23 @@
               </div>
             </div>
             <div>
-              <button onclick="applyIssueReportFilters()" class="w-full bg-brand-navy hover:bg-brand-blue text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition">
+              <button onclick="applyIssueReportFilters()" class="w-full bg-[#0f294a] hover:bg-brand-blue text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition">
                 Find
               </button>
             </div>
           </div>
 
-          <!-- Summary KPI Cards -->
           <div id="icr-kpi-strip" class="grid grid-cols-2 lg:grid-cols-4 gap-3.5"></div>
 
-          <!-- Export Toolbar -->
           <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
             <h3 class="font-display font-bold text-orange-500 text-base">Issued Stock & Consumption Entries:</h3>
             <div class="no-print flex flex-wrap gap-2">
               <button onclick="exportFilteredIssueReport('csv')" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700">CSV</button>
-              <button onclick="exportFilteredIssueReport('xls')" class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold">Excel (.xls)</button>
-              <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold">Print / PDF</button>
+              <button onclick="exportFilteredIssueReport('xlsx')" class="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold">Excel (.xlsx)</button>
+              <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-semibold">Print / PDF</button>
             </div>
           </div>
 
-          <!-- Audit Table -->
           <div class="overflow-x-auto border border-slate-200 rounded-xl">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
@@ -3620,7 +3572,7 @@
             <span class="text-[11px] font-bold uppercase text-slate-400">Total Units Issued</span>
             <div class="font-display text-xl font-extrabold text-slate-800 mt-1">${totalUnits} Units</div>
           </div>
-          <div class="bg-brand-navy text-white rounded-xl p-3.5 shadow-xs">
+          <div class="bg-[#0f294a] text-white rounded-xl p-3.5 shadow-xs">
             <span class="text-[11px] font-bold uppercase text-sky-200">Total Consumption Value</span>
             <div class="font-display text-xl font-extrabold mt-1">${formatINR(totalCost)}</div>
           </div>
@@ -3665,7 +3617,7 @@
       }).join('');
     }
 
-    function exportFilteredIssueReport(ext) {
+    function exportFilteredIssueReport(fmt) {
       const filtered = getFilteredIssueLogs();
       const headers = ['Issue Slip', 'Issue Date', 'Requisition Slip No', 'Recipient Name', 'Role', 'Department', 'Category', 'Product Name', 'Location', 'Issued Qty', 'Unit Price', 'Total Value', 'Issued By'];
       const rows = filtered.map(log => [
@@ -3683,11 +3635,15 @@
         log.qty * log.unitPrice,
         'Store Admin'
       ]);
-      exportTableCSV(`SchoolMitra_Issue_Consumption_Report.${ext}`, headers, rows);
+      if (fmt === 'xlsx') {
+        exportSheetXLSX('SchoolMitra_Issue_Consumption_Report.xlsx', 'IssueConsumption', headers, rows);
+      } else {
+        exportTableCSV('SchoolMitra_Issue_Consumption_Report.csv', headers, rows);
+      }
     }
 
     // =========================================================================
-    // 12. VIEW 9: ADD LOCATION & ASSET MANAGEMENT
+    // 13. VIEW 10: LOCATIONS & ASSET MANAGEMENT (RETURNS, DAMAGES & QR TAGS)
     // =========================================================================
     function renderLocations(ws) {
       ws.innerHTML = `
@@ -3707,7 +3663,7 @@
               <input type="text" id="loc-inc" placeholder="Staff Name" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
             </div>
             <div>
-              <button type="submit" class="w-full bg-brand-navy hover:bg-brand-blue text-white font-semibold text-xs py-2.5 px-4 rounded-xl">Add Location</button>
+              <button type="submit" class="w-full bg-[#0f294a] hover:bg-brand-blue text-white font-semibold text-xs py-2.5 px-4 rounded-xl">Add Location</button>
             </div>
           </form>
         </div>
@@ -3746,54 +3702,289 @@
 
     function renderAssetManagement(ws) {
       ws.innerHTML = `
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <h2 class="font-display font-bold text-slate-900 text-lg">Asset Register & Book Valuation</h2>
-              <p class="text-xs text-slate-500">Live valuation applying Category Standard & IT Depreciation Rates.</p>
+              <h2 class="font-display font-bold text-slate-900 text-lg">Asset Management — Returns, Damages, Valuation & QR Tags</h2>
+              <p class="text-xs text-slate-500">Manage staff returns back into usable stock, log CA-compliant damage write-offs, and print QR/Barcode asset stickers.</p>
             </div>
-            <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl">Print Register</button>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="openStockAdjustmentModal('Return to Store')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition">
+                <i data-lucide="corner-down-left" class="w-3.5 h-3.5"></i> Return to Store
+              </button>
+              <button onclick="openStockAdjustmentModal('Mark Damaged / Write-Off')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5 transition">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Mark Damaged / Write-Off
+              </button>
+            </div>
           </div>
-          <div class="overflow-x-auto">
+
+          <!-- Filter Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="text" id="am-search" oninput="filterAssetMgmtTable()" placeholder="Search asset code, name, location..." class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs focus:outline-none focus:border-brand-blue" />
+              <select id="am-cat-filter" onchange="filterAssetMgmtTable()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold bg-white">
+                <option value="ALL">All Categories</option>
+                ${state.categories.map(c => `<option value="${c.id}">${c.id}</option>`).join('')}
+              </select>
+            </div>
+            <button onclick="window.print()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-1.5 rounded-xl">Print Register</button>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-100 text-slate-700 font-bold border-y border-slate-200">
+              <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
-                  <th class="py-3 px-4">Code</th>
-                  <th class="py-3 px-4">Asset Name</th>
-                  <th class="py-3 px-4">Location</th>
-                  <th class="py-3 px-4 text-center">In Stock</th>
-                  <th class="py-3 px-4 text-right">Gross Value</th>
-                  <th class="py-3 px-4 text-center">Dep. Rate (IT)</th>
-                  <th class="py-3 px-4 text-right">Net Depreciated Book Value</th>
+                  <th class="py-3 px-3">Code</th>
+                  <th class="py-3 px-3">Asset Name</th>
+                  <th class="py-3 px-3">Category & Location</th>
+                  <th class="py-3 px-3 text-center">Usable Stock</th>
+                  <th class="py-3 px-3 text-right">Gross Value</th>
+                  <th class="py-3 px-3 text-center">Dep. Rate (IT)</th>
+                  <th class="py-3 px-3 text-right">Net Book Value</th>
+                  <th class="py-3 px-3 text-right">Operational Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-200">
-                ${state.assets.map(a => {
-                  const cat = state.categories.find(c => c.id === a.categoryId);
-                  const dep = cat ? cat.depRateIT : 10;
-                  const gross = a.stock * a.unitPrice;
-                  const net = gross * (1 - dep / 100);
-                  return `
-                    <tr class="hover:bg-slate-50">
-                      <td class="py-3 px-4 font-mono font-bold text-brand-blue">${a.code}</td>
-                      <td class="py-3 px-4 font-bold text-slate-800">${a.name}</td>
-                      <td class="py-3 px-4">${a.location}</td>
-                      <td class="py-3 px-4 text-center font-bold">${a.stock}</td>
-                      <td class="py-3 px-4 text-right">${formatINR(gross)}</td>
-                      <td class="py-3 px-4 text-center">${dep}%</td>
-                      <td class="py-3 px-4 text-right font-bold text-emerald-700">${formatINR(net)}</td>
-                    </tr>
-                  `;
-                }).join('')}
+              <tbody id="am-tbody" class="divide-y divide-slate-200">
+                ${renderAssetMgmtRows(state.assets)}
               </tbody>
             </table>
+          </div>
+
+          <!-- Returns & Damage Write-Off Audit Log -->
+          <div class="pt-2">
+            <h3 class="font-display font-bold text-orange-500 text-sm mb-2.5">Stock Return & Damage Write-Off Audit Log</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-2.5 px-3">Adj ID</th>
+                    <th class="py-2.5 px-3">Date</th>
+                    <th class="py-2.5 px-3">Action Type</th>
+                    <th class="py-2.5 px-3">Asset</th>
+                    <th class="py-2.5 px-3 text-center">Qty</th>
+                    <th class="py-2.5 px-3">Staff / Reason</th>
+                    <th class="py-2.5 px-3 text-right">Adjustment Value</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                  ${state.stockAdjustments.map(adj => {
+                    const a = getAsset(adj.assetId);
+                    const isReturn = adj.type === 'Return to Store';
+                    return `
+                      <tr>
+                        <td class="py-2.5 px-3 font-mono font-bold text-brand-blue">${adj.id}</td>
+                        <td class="py-2.5 px-3">${adj.date}</td>
+                        <td class="py-2.5 px-3">
+                          <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${isReturn ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700'}">${adj.type}</span>
+                        </td>
+                        <td class="py-2.5 px-3 font-bold">${a ? a.name : adj.assetId}</td>
+                        <td class="py-2.5 px-3 text-center font-extrabold ${isReturn ? 'text-emerald-700' : 'text-rose-600'}">${isReturn ? '+' : '-'}${adj.qty}</td>
+                        <td class="py-2.5 px-3">${adj.personOrReason}</td>
+                        <td class="py-2.5 px-3 text-right font-bold">${formatINR(adj.value)}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       `;
     }
 
+    function renderAssetMgmtRows(list) {
+      return list.map(a => {
+        const cat = state.categories.find(c => c.id === a.categoryId);
+        const dep = cat ? cat.depRateIT : 10;
+        const gross = a.stock * a.unitPrice;
+        const net = gross * (1 - dep / 100);
+        return `
+          <tr class="hover:bg-slate-50 align-middle">
+            <td class="py-3 px-3 font-mono font-bold text-brand-blue">${a.code}</td>
+            <td class="py-3 px-3 font-bold text-slate-800">${a.name}<div class="text-[11px] font-normal text-slate-500">${a.brand}</div></td>
+            <td class="py-3 px-3">${a.categoryId} • <strong>${a.location}</strong></td>
+            <td class="py-3 px-3 text-center font-extrabold">${a.stock} ${a.unit || 'Nos'}</td>
+            <td class="py-3 px-3 text-right">${formatINR(gross)}</td>
+            <td class="py-3 px-3 text-center">${dep}%</td>
+            <td class="py-3 px-3 text-right font-bold text-emerald-700">${formatINR(net)}</td>
+            <td class="py-3 px-3 text-right space-x-1 whitespace-nowrap">
+              <button onclick="openStockAdjustmentModal('Return to Store', '${a.id}')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold px-2 py-1 rounded-lg text-[11px]">+ Return</button>
+              <button onclick="openStockAdjustmentModal('Mark Damaged / Write-Off', '${a.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold px-2 py-1 rounded-lg text-[11px]">- Damage</button>
+              <button onclick="openQRTagModal('${a.id}')" class="bg-[#0f294a] hover:bg-brand-blue text-white font-semibold px-2.5 py-1 rounded-lg text-[11px] inline-flex items-center gap-1">
+                <i data-lucide="qr-code" class="w-3 h-3"></i> Print QR Tag
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterAssetMgmtTable() {
+      const q = document.getElementById('am-search').value.toLowerCase();
+      const cat = document.getElementById('am-cat-filter').value;
+      const filtered = state.assets.filter(a => {
+        if (cat !== 'ALL' && a.categoryId !== cat) return false;
+        return a.name.toLowerCase().includes(q) || a.code.toLowerCase().includes(q) || a.location.toLowerCase().includes(q);
+      });
+      document.getElementById('am-tbody').innerHTML = renderAssetMgmtRows(filtered);
+      lucide.createIcons();
+    }
+
+    function openStockAdjustmentModal(mode, preAssetId = '') {
+      const isReturn = mode === 'Return to Store';
+      openModal(`
+        <div class="flex items-start justify-between border-b border-slate-200 pb-3 mb-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider ${isReturn ? 'text-emerald-600' : 'text-rose-600'}">Stock Adjustment & Audit</span>
+            <h3 class="font-display font-extrabold text-lg text-slate-900">${mode}</h3>
+          </div>
+          <button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <form onsubmit="handleStockAdjustment(event, '${mode}')" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Select Asset</label>
+            <select id="adj-asset" required class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold bg-white">
+              ${state.assets.map(a => `<option value="${a.id}" ${preAssetId === a.id ? 'selected' : ''}>${a.name} (${a.code}) — Current Stock: ${a.stock}</option>`).join('')}
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> Quantity</label>
+              <input type="number" id="adj-qty" required min="1" value="1" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Date</label>
+              <input type="date" id="adj-date" required value="2026-11-24" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1"><span class="text-rose-500">*</span> ${isReturn ? 'Returned By Staff / Department' : 'Damage / Write-Off Reason'}</label>
+            ${isReturn
+              ? `<input type="text" id="adj-reason" required placeholder="e.g., Returned unused by Trapti Singh Kushwah (Admin Block)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs" />`
+              : `<select id="adj-reason" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs bg-white">
+                  <option value="Broken / Physical Damage">Broken / Physical Damage</option>
+                  <option value="Expired Shelf Life">Expired Shelf Life</option>
+                  <option value="Beyond Repair / Obsolete">Beyond Repair / Obsolete</option>
+                </select>`
+            }
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700">Cancel</button>
+            <button type="submit" class="px-5 py-2 rounded-xl ${isReturn ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'} text-white text-xs font-bold shadow-xs">
+              Confirm ${mode}
+            </button>
+          </div>
+        </form>
+      `);
+    }
+
+    function handleStockAdjustment(e, mode) {
+      e.preventDefault();
+      const assetId = document.getElementById('adj-asset').value;
+      const qty = parseInt(document.getElementById('adj-qty').value, 10) || 0;
+      const date = document.getElementById('adj-date').value;
+      const reason = document.getElementById('adj-reason').value.trim();
+      const asset = getAsset(assetId);
+      if (!asset) return;
+
+      const isReturn = mode === 'Return to Store';
+      if (!isReturn && qty > asset.stock) {
+        showToast(`Cannot write off ${qty} units; only ${asset.stock} in usable stock.`, 'error');
+        return;
+      }
+
+      if (isReturn) {
+        asset.stock += qty;
+      } else {
+        asset.stock -= qty;
+      }
+
+      state.stockAdjustments.unshift({
+        id: 'ADJ-00' + (state.stockAdjustments.length + 1),
+        date,
+        type: mode,
+        assetId,
+        qty,
+        personOrReason: reason,
+        value: qty * asset.unitPrice
+      });
+
+      saveState();
+      closeModal();
+      showToast(`${mode} recorded (${isReturn ? '+' : '-'}${qty} ${asset.name})!`, isReturn ? 'success' : 'warning');
+      navigate('asset-management');
+    }
+
+    function openQRTagModal(assetId) {
+      const asset = getAsset(assetId);
+      if (!asset) return;
+      openModal(`
+        <div class="flex items-start justify-between border-b border-slate-200 pb-3 mb-4 no-print">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-blue">Printable Fixed Asset Label</span>
+            <h3 class="font-display font-extrabold text-lg text-slate-900">QR & Barcode Sticker Preview</h3>
+          </div>
+          <button onclick="closeModal()" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="flex justify-center py-4">
+          <div class="w-80 border-2 border-slate-900 rounded-2xl p-4 bg-white shadow-md text-slate-900">
+            <div class="flex items-center justify-between border-b border-slate-300 pb-2 mb-3">
+              <div>
+                <div class="font-display font-extrabold text-xs tracking-tight text-[#0f294a]">R.D. PUBLIC SCHOOL</div>
+                <div class="text-[9px] text-slate-500">Kalapatha, Betul (M.P.) • Session 2026-27</div>
+              </div>
+              <span class="text-[10px] font-mono font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-300">${asset.categoryId}</span>
+            </div>
+
+            <div class="flex items-center gap-3.5">
+              <!-- Crisp SVG QR Code Graphic -->
+              <svg viewBox="0 0 100 100" class="w-24 h-24 shrink-0 border border-slate-200 p-1 rounded-lg bg-white">
+                <rect x="6" y="6" width="26" height="26" fill="none" stroke="#0f294a" stroke-width="5"/>
+                <rect x="13" y="13" width="12" height="12" fill="#0f294a"/>
+                <rect x="68" y="6" width="26" height="26" fill="none" stroke="#0f294a" stroke-width="5"/>
+                <rect x="75" y="13" width="12" height="12" fill="#0f294a"/>
+                <rect x="6" y="68" width="26" height="26" fill="none" stroke="#0f294a" stroke-width="5"/>
+                <rect x="13" y="75" width="12" height="12" fill="#0f294a"/>
+                <rect x="40" y="10" width="8" height="8" fill="#0f294a"/>
+                <rect x="52" y="18" width="8" height="8" fill="#0f294a"/>
+                <rect x="40" y="38" width="20" height="20" fill="#0284C7"/>
+                <rect x="12" y="42" width="16" height="8" fill="#0f294a"/>
+                <rect x="70" y="44" width="18" height="8" fill="#0f294a"/>
+                <rect x="44" y="68" width="12" height="12" fill="#0f294a"/>
+                <rect x="68" y="70" width="22" height="8" fill="#0f294a"/>
+                <rect x="44" y="84" width="38" height="8" fill="#0f294a"/>
+              </svg>
+
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="text-[10px] font-bold uppercase text-slate-400">Asset Code</div>
+                <div class="font-mono font-extrabold text-base text-[#0f294a] leading-none">${asset.code}</div>
+                <div class="font-bold text-xs text-slate-900 truncate pt-1">${asset.name}</div>
+                <div class="text-[11px] text-slate-600">Location: <strong>${asset.location}</strong></div>
+                <div class="text-[10px] text-slate-500">Brand: ${asset.brand}</div>
+              </div>
+            </div>
+
+            <!-- Simulated Barcode Strip -->
+            <div class="mt-3 pt-2 border-t border-dashed border-slate-300 text-center">
+              <div class="h-5 w-full bg-[repeating-linear-gradient(90deg,#0f294a_0px,#0f294a_2px,transparent_2px,transparent_5px,#0f294a_5px,#0f294a_6px,transparent_6px,transparent_9px)]"></div>
+              <div class="font-mono text-[9px] tracking-[0.25em] text-slate-600 mt-1">*${asset.code}*</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 no-print">
+          <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-100 text-xs font-semibold text-slate-700">Close</button>
+          <button onclick="window.print()" class="px-5 py-2 rounded-xl bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-bold inline-flex items-center gap-1.5">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Sticker
+          </button>
+        </div>
+      `);
+    }
+
     // =========================================================================
-    // 13. VIEW 10: COMPREHENSIVE INVENTORY REPORTING SUITE
+    // 14. VIEW 11: COMPREHENSIVE INVENTORY REPORTING SUITE
     // =========================================================================
     let currentReportTab = 'audit';
 
@@ -3808,27 +3999,26 @@
               <p class="text-xs text-slate-500">R.D. Public School, Betul • Session 2026-27 Official Audit Reports</p>
             </div>
             <div class="no-print flex flex-wrap gap-2">
-              <button onclick="exportCurrentReportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export Excel / CSV
+              <button onclick="exportCurrentReportXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export Excel (.xlsx)
               </button>
-              <button onclick="window.print()" class="bg-brand-navy hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5">
+              <button onclick="window.print()" class="bg-[#0f294a] hover:bg-brand-blue text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5">
                 <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Report
               </button>
             </div>
           </div>
 
-          <!-- Report Sub-Tabs -->
           <div class="no-print flex flex-wrap gap-2 mb-5">
-            <button onclick="renderReports(document.getElementById('app-workspace'), 'audit')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'audit' ? 'bg-brand-navy text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+            <button onclick="renderReports(document.getElementById('app-workspace'), 'audit')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'audit' ? 'bg-[#0f294a] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
               1. Requisition-to-Issue Audit Trail
             </button>
-            <button onclick="renderReports(document.getElementById('app-workspace'), 'consumption')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'consumption' ? 'bg-brand-navy text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+            <button onclick="renderReports(document.getElementById('app-workspace'), 'consumption')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'consumption' ? 'bg-[#0f294a] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
               2. Staff & Dept Consumption Ledger
             </button>
-            <button onclick="renderReports(document.getElementById('app-workspace'), 'valuation')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'valuation' ? 'bg-brand-navy text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+            <button onclick="renderReports(document.getElementById('app-workspace'), 'valuation')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'valuation' ? 'bg-[#0f294a] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
               3. Stock Valuation & Depreciation
             </button>
-            <button onclick="renderReports(document.getElementById('app-workspace'), 'lowstock')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'lowstock' ? 'bg-brand-navy text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+            <button onclick="renderReports(document.getElementById('app-workspace'), 'lowstock')" class="px-4 py-2 rounded-xl text-xs font-bold transition ${tab === 'lowstock' ? 'bg-[#0f294a] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
               4. Low-Stock Reorder Report
             </button>
           </div>
@@ -3870,7 +4060,7 @@
                       <td class="py-3 px-3 text-center">${r.qty}</td>
                       <td class="py-3 px-3 text-center font-bold">${r.issuedQty}</td>
                       <td class="py-3 px-3 font-mono">${r.linkedPO || '-'}</td>
-                      <td class="py-3 px-3 font-bold ${r.status === 'Completed - Item Issued' ? 'text-emerald-700' : 'text-amber-700'}">${r.status}</td>
+                      <td class="py-3 px-3 font-bold ${r.status === 'Completed (Item Issued)' ? 'text-emerald-700' : 'text-amber-700'}">${r.status}</td>
                     </tr>
                   `;
                 }).join('')}
@@ -3983,22 +4173,25 @@
       `;
     }
 
-    function exportCurrentReportCSV() {
+    function exportCurrentReportXLSX() {
       if (currentReportTab === 'audit') {
-        exportTableCSV(
-          'Requisition_Audit_Report.csv',
+        exportSheetXLSX(
+          'Requisition_Audit_Report.xlsx',
+          'AuditTrail',
           ['Req ID', 'Requester', 'Department', 'Asset', 'Requested', 'Issued', 'Status'],
           state.requisitions.map(r => [r.id, r.requesterName, r.department, getAsset(r.assetId)?.name || r.assetId, r.qty, r.issuedQty, r.status])
         );
       } else if (currentReportTab === 'consumption') {
-        exportTableCSV(
-          'Consumption_Ledger.csv',
+        exportSheetXLSX(
+          'Consumption_Ledger.xlsx',
+          'Consumption',
           ['Slip ID', 'Date', 'Req ID', 'Issued To', 'Role', 'Department', 'Asset', 'Qty', 'Total Cost'],
           state.issueLogs.map(l => [l.id, l.date, l.reqId, l.userName, l.role, l.department, getAsset(l.assetId)?.name || l.assetId, l.qty, l.qty * l.unitPrice])
         );
       } else {
-        exportTableCSV(
-          'Stock_Valuation_Report.csv',
+        exportSheetXLSX(
+          'Stock_Valuation_Report.xlsx',
+          'Valuation',
           ['Code', 'Asset Name', 'Category', 'Stock', 'Min Stock', 'Unit Price', 'Valuation'],
           state.assets.map(a => [a.code, a.name, a.categoryId, a.stock, a.minStock, a.unitPrice, a.stock * a.unitPrice])
         );
@@ -4006,7 +4199,7 @@
     }
 
     // =========================================================================
-    // 14. INITIALIZE APPLICATION ON LOAD
+    // 15. INITIALIZE APPLICATION ON LOAD
     // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('active-role-select').value = state.activeRole;
